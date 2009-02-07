@@ -203,7 +203,7 @@ function export_node_import() {
   if ($_POST['import_code']) {
     $node_code = str_replace('node(code(', 'array(array(', $_POST['import_code']);
     $imp = eval("return ".$node_code.";");
-    return str_replace('/admin/content/import', '/node/add/'.$imp[0]['type'].'', drupal_get_form($imp[0]['type'] .'_node_form', $imp[0]));
+    return str_replace('admin/content/import', 'node/add/'.$imp[0]['type'].'', drupal_get_form($imp[0]['type'] .'_node_form', $imp[0]));
   } else {
     return drupal_get_form('export_import_form', $form);
   }
