@@ -179,10 +179,12 @@ function export_node_export($nid) {
         $function = $module .'_export_node_alter';
         $function($node, $original_node, "prepopulate");
       }
+      $node_code = var_export($node, true);
+      $node_code = str_replace('stdClass::__set_state(array(', 'node(code(', $node_code);
       $form['export'] = array(
         '#type' => 'textarea',
         '#title' => t('Node Code'),
-        '#default_value' => var_export($node, true),
+        '#default_value' => $node_code,
         '#rows' => 30,
         '#description' => t('Copy this code and then on the site you want to import to, go to the Import Node link under Content Management, and paste it in there.'),
       );
@@ -199,7 +201,7 @@ function export_node_import() {
   global $user;
   $output;
   if ($_POST['import_code']) {
-    $node_code = str_replace("stdClass::__set_state", "array", $_POST['import_code']);
+    $node_code = str_replace('node(code(', 'array(array(', $_POST['import_code']);
     $imp = eval("return ".$node_code.";");
     return str_replace('/admin/content/import', '/node/add/'.$imp[0]['type'].'', drupal_get_form($imp[0]['type'] .'_node_form', $imp[0]));
   } else {
