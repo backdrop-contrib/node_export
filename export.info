@@ -1,0 +1,8 @@
+; $Id$
+name = Export module
+description = "Allows users to export a node and the import into another Drupal installation."
+; Information added by drupal.org packaging script on 2009-02-07
+version = "5.x-1.3"
+project = "node_export"
+datestamp = "1233977735"
+
