@@ -19,7 +19,7 @@ function export_help($section) {
 * Implementation of hook_perm().
 */
 function export_perm() {
-  return array('export node', 'export own nodes', 'import nodes');
+  return array('export node', 'export bulk nodes', 'export own nodes', 'import nodes');
 }
 
 
