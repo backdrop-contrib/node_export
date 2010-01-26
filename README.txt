@@ -38,4 +38,3 @@ available, but there are no changes to the database structure.
 Note: this module was originally built upon code from the node_clone module
 maintained by Peter Wolanin (pwolanin@drupal) at http://drupal.org/project/node_clone
 which was derived from code posted by Steve Ringwood (nevets@drupal) at http://drupal.org/node/73381#comment-137714
-
