@@ -23,18 +23,19 @@ especially if you are using a complex (CCK) or custom node type, you should
 evaluate this module on a test site with a copy of your database before 
 attempting to use it on a live site.
 
-To install this module, copy the folder with the .info and .module files to the 
-/sites/all/modules  OR /modules directory of your Drupal installation and enable
-it at /admin/build/modules.  A new permission is available, but there are no 
-changes to the database structure. On the settings page you may choose
-node types to be omitted from the export mechanism - no users will be able
-to try to export a node of an omitted type.
-
 To install this module, copy the folder with all the files to the
 /sites/all/modules  OR /sites/default/modules directory of your Drupal 
-installation and enable it at /admin/build/modules.  Two new permissions are 
+installation and enable it at /admin/build/modules.  New permissions are 
 available, but there are no changes to the database structure.
 
+Security Warning: Users with the permission "use PHP to import nodes"
+will be able to change nodes as they see fit before an import, as well as 
+being able to execute PHP scripts on the server.  It is advisable not to
+give this permission to a typical node author, only the administrator or
+developer should use this feature.  You may even like to turn this module
+off when it is no longer required.
+
 Note: this module was originally built upon code from the node_clone module
-maintained by Peter Wolanin (pwolanin@drupal) at http://drupal.org/project/node_clone
-which was derived from code posted by Steve Ringwood (nevets@drupal) at http://drupal.org/node/73381#comment-137714
+maintained by Peter Wolanin (pwolanin@drupal) at 
+http://drupal.org/project/node_clone which was derived from code posted by 
+Steve Ringwood (nevets@drupal) at http://drupal.org/node/73381#comment-137714

@@ -19,7 +19,7 @@ function export_help($section) {
 * Implementation of hook_perm().
 */
 function export_perm() {
-  return array('export node', 'export bulk nodes', 'export own nodes', 'import nodes');
+  return array('export node', 'export bulk nodes', 'export own nodes', 'use PHP to import nodes');
 }
 
 
@@ -45,7 +45,7 @@ function export_menu($may_cache) {
        'title' => t('Import Node'),
        'description' => t('Allows users to import a node from another site.'),
        'callback' =>'export_node_import',
-       'access' => user_access('import nodes'),
+       'access' => user_access('use PHP to import nodes'),
     ); 
     if (arg(0) == 'node' && is_numeric(arg(1))){
        $node = node_load(arg(1));
