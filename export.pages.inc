@@ -61,7 +61,7 @@ function export_node_export($original_node, $return_code = FALSE, $iteration = 0
       $node->vid = NULL;
       $node->name = $user->name;
       $node->uid = $user->uid;
-      $node->created = NULL;
+      //$node->created = NULL;
       $node->menu = NULL;
       $node->path = NULL;
       $node->files = array();
@@ -227,7 +227,7 @@ function export_node_prepopulate($original_node) {
     $node->vid = NULL;
     $node->name = $user->name;
     $node->uid = $user->uid;
-    $node->created = NULL;
+    //$node->created = NULL;
     $node->menu = NULL;
     if (isset($node->book['mlid'])) {
       $node->book['mlid'] = NULL;
@@ -269,7 +269,7 @@ function export_node_save($node) {
     $node->vid = NULL;
     $node->name = $user->name;
     $node->uid = $user->uid;
-    $node->created = NULL;
+    //$node->created = NULL;
     $node->menu = NULL;
     $node->book['mlid'] = NULL;
     $node->path = NULL;
