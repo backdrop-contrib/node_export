@@ -16,7 +16,7 @@ function export_settings() {
     '#options' => array('prepopulate' => t('Pre-populate the node form fields'), 'save-edit' => t('Save as a new node then edit')),
     '#default_value' => variable_get('export_method', 'prepopulate'),
   );
-  
+
   $form['publishing'] = array(
     '#type' => 'fieldset',
     '#title' => t('Should the publishing options ( e.g. published, promoted, etc) be reset to the defaults?'),
@@ -187,7 +187,7 @@ function export_import_form() {
   );
   $form['#redirect'] = FALSE;
   $form['submit'] = array(
-    '#type' => 'submit', 
+    '#type' => 'submit',
     '#value' => t('Import'),
   );
   return $form;
@@ -200,7 +200,7 @@ function export_import_form() {
 function export_node_check($node) {
 
   $method = variable_get('export_method', 'prepopulate');
-  
+
   switch ($method) {
     case 'save-edit':
       $new_nid = export_node_save($node);
@@ -322,7 +322,8 @@ function export_node_encode($var, $iteration = 0){
     return $code;
   } else {
     if (is_string($var)) {
-      return "'".addslashes($var)."'";
+      // Escape single quotes so we don't accidentally exit the string.
+      return "'". strtr($var, array("'" => "\\'")) ."'";
     }
     elseif (is_numeric($var)) {
       return $var;
@@ -352,9 +353,6 @@ function export_node_decode_objects($array) {
   foreach ($array as $k => $v) {
     if (is_array($v)) {
       $array[$k] = export_node_decode_objects($v);
-    }
-    if (is_string($v)) {
-      $array[$k] = stripslashes($v);
     }
   }
   if ($array['#_export_node_encode_object']) {
