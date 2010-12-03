@@ -1,0 +1,83 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * The Node export XML module.
+ *
+ * Adds XML format to Node export.
+ */
+
+/**
+ * Implementation of hook_???().
+ */
+function node_export_xml_node_encode($var, $iteration = 0, $key = "") {
+  if ($iteration == 0) {
+    $code = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<node>\n";
+  }
+
+  $tab = '';
+  for ($i = 0; $i < $iteration; $i++) {
+    $tab = $tab ."  ";
+  }
+  $iteration++;
+  if (is_object($var)) {
+    $var = (array)$var;
+  }
+  if (is_array($var)) {
+
+    $empty = empty($var);
+    foreach ($var as $key => $value) {
+      $prefix = "";
+      $postfix = "";
+
+      if (is_array($value)) {
+        $prefix = "<". $key .">";
+        $postfix = "</". $key .">";
+      }
+
+      $out = $tab . $prefix . node_export_xml_node_encode($value, $iteration, $key) ."$postfix \n";
+      $code .= $out;
+    }
+    $code .= ($empty ? '' : $tab);
+
+    // End of node.
+    if ($iteration == 1) {
+        $code .= '</node>';
+    }
+    return $code;
+  }
+  else {
+    // This is the final level of recursion, wrap $var in an appropriate xml node.
+    $prefix = "<". $key .">";
+    $postfix = "</". $key .">";
+
+    if (is_string($var)) {
+      return $prefix . addslashes($var) . $postfix;
+    }
+    elseif (is_numeric($var)) {
+      return $prefix . $var . $postfix;
+    }
+    elseif (is_bool($var)) {
+      return $prefix . ($var ? 'TRUE' : 'FALSE') . $postfix;
+    }
+    else {
+      return $prefix . 'NULL' . $postfix;
+    }
+  }
+}
+
+
+/**
+ * Implementation of hook_node_export_format_handlers().
+ *
+ * @see hook_node_export_format_handlers()
+ */
+function hook_node_export_format_handlers() {
+  return array(
+    'xml' => array(
+      '#title' => t('XML'),
+      '#module' => 'node_export_xml',
+    ),
+  );
+}

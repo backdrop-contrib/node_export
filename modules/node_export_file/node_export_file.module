@@ -3,7 +3,7 @@
 
 /**
  * @file
- * The Node Export File module.
+ * The Node export file module.
  *
  * Export helper module for handling CCK FileFields, Uploaded files, and Images.
  */
@@ -56,7 +56,7 @@ function node_export_file_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => variable_get('node_export_file_mode', 'inline'),
       '#options' => array('inline' => t('Inside export code (base 64 encoded string)'), 'local' => t('Local file export'), 'remote' => t('Remote file export, URL')),
       '#description' => t('Should file exports be inline inside the export code, a local path to the file or a URL?  "Inside export code" is the easiest option to use, local and remote modes are more useful for power users.  <em>NOTE: Remote mode only works with a public files directory.</em>'),
-      '#prefix' => '<div id="node-export-file-mode-message"><div class="message warning" style="display: ' . ($mode_message_display ? 'block' : 'none') . ';">' . t('Warning, "Inside export code (base 64 encoded string)" mode generates much larger exports.  For this reason it is recommended you set the export code delivery methods to "Text file download" (both <strong>Node export code delivery</strong> and <strong>Bulk node export code delivery</strong>).') . '</div></div>',
+      '#prefix' => '<div id="node-export-file-mode-message"><div class="message warning" style="display: ' . ($mode_message_display ? 'block' : 'none') . ';">' . t('Warning, "Inside export code (base 64 encoded string)" mode generates much larger exports.  For this reason it is recommended you set the export code delivery methods to "Text file download".') . '</div></div>',
     );
 
     $form['node_export_file']['node_export_file_assets_path'] = array(

@@ -1,6 +1,6 @@
 $Id$
 
-Node Export README
+Node export README
 
 CONTENTS OF THIS FILE
 ----------------------
@@ -13,13 +13,12 @@ CONTENTS OF THIS FILE
 
 INTRODUCTION
 ------------
-The export module allows users to export a node and then import it to another 
-website. The authorship is set to the current user, the menu and url aliases 
-are reset.
+This module allows users to export nodes and then import it into another
+Drupal installation, or on the same site.
 
 This module makes reasonable checks on access permissions.  A user cannot export 
 a node unless they can use the input format of that node, and unless they have
-permission to create new nodes of that type based on a call to node_access().
+permission to create new nodes of that type.
 
 Maintainer: Daniel Braksator (http://drupal.org/user/134005)
 Project page: http://drupal.org/project/node_export.
@@ -34,7 +33,7 @@ http://drupal.org/node/73381#comment-137714
 INSTALLATION
 ------------
 1. Copy node_export folder to modules directory (usually sites/all/modules).
-2. At admin/build/modules enable the Node Export module.
+2. At admin/build/modules enable the Node export module.
 
 
 CONFIGURATION
@@ -52,7 +51,12 @@ CONFIGURATION
 USAGE
 -----
 1. To export nodes, either:
-   a) click the 'Export' tab on a node page or,
-   b) use the Content page (admin/content/node) to filter the nodes you wish to
-      export and then choose 'Export nodes' under the 'Update options'.
-2. To import nodes go to 'Node Export: Import' (admin/content/import).
+   a) Use the 'Node export' tab on a node page.
+   b) Use the Content page (admin/content/node) to filter the nodes you wish to
+      export and then choose 'Node export' under the 'Update options'.
+   c) Use the VBO module: http://drupal.org/project/views_bulk_operations
+   d) Use Drush: http://drupal.org/project/drush
+2. To import nodes, either:
+   a) Use the form at 'Node export: import' under 'Create content'
+      (node/add/node_export).
+   b) Use Drush: http://drupal.org/project/drush

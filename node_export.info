@@ -1,4 +1,5 @@
 ; $Id$
-name = Node Export
+name = Node export
 description = "Allows users to export a node and the import into another Drupal installation."
 core = 6.x
+package = "Node export"

@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Documents node_export's hooks for api reference.
+ * Documents Node export's hooks for api reference.
  */
 
 /**
@@ -28,11 +28,8 @@ function hook_node_export_access_alter(&$access, $node) {
  *   The node to alter.
  * @param $original_node
  *   The unaltered node.
- * @param $method
- *   'export' for exports, and 'prepopulate' or 'save-edit' for imports
- *   depending on the method used.
  */
-function hook_node_export_node_alter(&$node, $original_node, $method) {
+function hook_node_export_node_alter(&$node, $original_node) {
   // no example code
 }
 
@@ -56,7 +53,7 @@ function hook_node_export_node_encode_line_alter(&$out, $tab, $key, $value, $ite
 }
 
 /**
- * Manipulate node array before bulk export or import.
+ * Manipulate node array before export or import.
  *
  * The purpose of this is to allow a module to check nodes in the array for
  * two or more nodes that must retain a relationship, and to add/remove other
@@ -68,81 +65,32 @@ function hook_node_export_node_encode_line_alter(&$out, $tab, $key, $value, $ite
  * @param $op
  *   'import', 'after import', or 'export'.
  */
-function hook_node_export_node_bulk_alter(&$nodes, $op) {
+function hook_node_export(&$nodes, $op) {
   // no example code
 }
 
 /**
- * Circumvent the default node export output method.
+ * Manipulate the code string before import.
  *
- * @param &$return
- *   The node export code.  Leave as FALSE for no change.
- * @param $var
- *   The node.
- * @param $format
- *   A string indicating what the export format is, and whether to do anything.
+ * @param &$code_string
+ *   The export code.
  */
-function hook_node_export_node_encode_alter(&$return, $var, $format) {
-  // your code here
-
-  /*
-   Initially $return will be FALSE, if you change $return to something else,
-   you will override node_export's default node code to whatever that value is.
-   $var contains the node object.
-   Now you could either decide to always override the $return value (which
-   would be a problem if multiple modules decided to do that as only one of
-   them would work), but it would be better to only intervene when $format is
-   set to some string that your module recognises. The idea is that if we went
-   to the URL node/40/node_export/xml it would try to export node 40 with 'xml'
-   as the $format.
-   (You do not need to actually return anything)
-   */
+function hook_node_export_decode_alter(&$code_string) {
+  // no example code
 }
 
 /**
- * Circumvent the default node import method.
+ * Manipulate the code string upon export.
  *
- * @param &$return
- *   The array/object to return to node export.
- * @param $string
- *   The node code.
- */
-function hook_node_export_node_decode_alter(&$return, $string) {
-  // your code here
-
-  /*
-   This goes hand-in-hand with hook_node_export_node_encode_alter().
-   You would have to autodetect the format in the $string and change the
-   $return value if required.
-   (Don't return anything)
-  */
-}
-
-/**
- * Circumvent the default bulk node export output method.
- *
- * @param &$node_code
- *   The node export code.  Leave as FALSE for no change.
+ * @param &$code_string
+ *   The Node export code.  Leave as FALSE for no change.
  * @param $nodes
  *   The node.
  * @param $format
  *   A string indicating what the export format is, and whether to do anything.
  */
-function hook_node_export_node_bulk_encode_alter(&$node_code, $nodes, $format) {
-  // your code here
-
-  /*
-   Again, $node_code starts off as FALSE, if you change it you override it
-   Your code would ideally loop through $nodes, pass them off to the function
-   you created earlier to export single nodes, and then somehow concatenate all
-   the returns from that function into $node_code.
-   (again, you don't actually return anything)
-
-   You should also implement your own hook_node_operations() following what
-   node_export did, but changing the label slightly, and adding the 2nd callback
-   argument that is your $format string. But keep the callback the same as
-   node_export, don't replace that.
-  */
+function hook_node_export_encode_alter(&$code_string, $nodes, $format) {
+  // no example code
 }
 
 /**
@@ -155,9 +103,40 @@ function hook_node_export_node_bulk_encode_alter(&$node_code, $nodes, $format) {
  */
 function hook_node_export_format_handlers() {
   return array(
+    // Note: format_short_name must NOT contain the string 'node_export'.
     'format_short_name' => array(
       '#title' => t('Format Title'),
       '#module' => 'format_module_name',
     ),
   );
+}
+
+/**
+ * Create the output code for nodes.
+ *
+ * Called from the module with the currently used export format.
+ *
+ * @param $nodes
+ *   An array of nodes to export.
+ * @param $format
+ *   The format to use for export.  Check this if module does multiple formats.
+ * @return
+ *   The code string.
+ */
+function hook_node_export($nodes, $format) {
+  // no example code
+}
+
+/**
+ * Handle importing of a node.
+ *
+ * Called on all format handler modules until one returns something useful.
+ *
+ * @param $code_string
+ * @return
+ *   The array of nodes, or nothing if code_string or format not handled by
+ *   this function.
+ */
+function node_export_node_export_import($code_string) {
+  // no example code
 }
