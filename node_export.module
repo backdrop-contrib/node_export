@@ -88,11 +88,11 @@ function node_export_menu() {
   );
   */
   $items['node/add/node_export'] = array(
-    'title' => 'Node export: import', 
+    'title' => 'Node export: import',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('node_export_import_form'),
     'access arguments' => array('use PHP to import nodes'),
-    'description' => 'Import content using <em>Node export</em>.', 
+    'description' => 'Import content using <em>Node export</em>.',
     'file' => 'node_export.pages.inc',
   );
 
@@ -271,9 +271,10 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     // Fix menu array
     $node->menu = node_export_get_menu($original_node);
 
-    // Let other modules do special fixing up.
-    drupal_alter('node_export_node', $node, $original_node, 'export', $format);
     $node = node_export_remove_recursion($node);
+
+    // Let other modules do special fixing up.
+    drupal_alter('node_export_node', $node, $original_node, 'export');
 
     $nodes[] = $node;
   }
@@ -310,11 +311,11 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
  *  @return
  *    TRUE if all types exist, otherwise an array of missing type names.
  */
-function node_export_import_types_check($import) {
+function node_export_import_types_check($nodes) {
   $missing_types = array();
-  foreach ($import as $new_node) {
-    if (node_get_types('name', $new_node) == FALSE) {
-      $missing_types[$new_node->type] = $new_node->type;
+  foreach ($nodes as $node) {
+    if (node_get_types('name', $node) == FALSE) {
+      $missing_types[$node->type] = $node->type;
     }
   }
   return (!empty($missing_types) ? $missing_types : TRUE);
@@ -329,7 +330,7 @@ function node_export_import_types_check($import) {
  *   Function used to translate.
  * @return
  *   An array with keys 'success' which is a boolean value representing whether
- *   the import was successful and 'output' which contains an array of 
+ *   the import was successful and 'output' which contains an array of
  *   translated strings to be shown to the user as messages.
  */
 function node_export_import($code_string, $msg_t = 't') {
@@ -339,21 +340,45 @@ function node_export_import($code_string, $msg_t = 't') {
 
   // Pass the string to each format handler until one returns something useful.
   $format_handlers = node_export_format_handlers();
-  $import = array();
+  $nodes = array();
+  $used_format = "";
   foreach ($format_handlers as $format_handler => $format) {
-     $import = module_invoke(
+     $nodes = module_invoke(
        $format_handlers[$format_handler]['#module'],
        'node_export_import',
        $code_string
      );
-     if (!empty($import)) {
+     if (!empty($nodes)) {
+       $used_format = $format_handler;
        break;
      }
   }
+  
+  if (isset($nodes['success']) && !$nodes['success']) {
+    // Instead of returning nodes, the format handler returned an error array.
+    // Translate the errors and return them.
+    foreach ($nodes['output'] as $key => $output) {
+      $nodes['output'][$key] = $msg_t($output);
+    }
+    return array(
+      'success' => FALSE,
+      'output' => $nodes['output'],
+    );
+  }
 
-  $import = node_export_restore_recursion($import);
+  if ($used_format == "") {
+    $error = $msg_t(
+      'Node export was unable to recognize the format of the supplied code.  No nodes imported.'
+    );
+    return array(
+      'success' => FALSE,
+      'output' => array($error),
+    );
+  }
 
-  $types_exist = node_export_import_types_check($import);
+  $nodes = node_export_restore_recursion($nodes);
+
+  $types_exist = node_export_import_types_check($nodes);
   if ($types_exist !== TRUE) {
     // There was a problem with the content types check.
     $error = $msg_t(
@@ -366,7 +391,7 @@ function node_export_import($code_string, $msg_t = 't') {
     );
   }
 
-  if (!node_export_access_nodes($import)) {
+  if (!node_export_access_nodes($nodes)) {
     // There was a problem with permissions.
     $error = $msg_t(
       'You do not have permission to perform a Node export: import on one or more of these nodes.  No nodes imported.'
@@ -378,21 +403,29 @@ function node_export_import($code_string, $msg_t = 't') {
   }
 
   $count = 0;
-  $total = count($import);
+  $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $import, 'import');
+  drupal_alter('node_export', $import, 'import', $used_format);
   $new_nodes = array();
   $new_nid = 0;
   $messages = array();
-  foreach ($import as $new_node) {
-    $new_nid = node_export_node_save($new_node);
-    $new_node->nid = $new_nid;
-    $new_nodes[] = $new_node;
-    $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $new_nid, '!node' => l($new_node->title, 'node/'. $new_nid)));
+  foreach ($nodes as $original_node) {
+    $node = node_export_node_clone($original_node);
+
+    // Let other modules do special fixing up.
+    drupal_alter('node_export_node', $node, $original_node, 'import');
+
+    node_export_save($node);
+    $new_nodes[] = $node;
+    $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/'. $node->nid)));
     $count++;
   }
-  drupal_alter('node_export', $new_nodes, 'after import');
+  drupal_alter('node_export', $new_nodes, 'after import', $used_format);
   $messages[] = $msg_t("!count of !total nodes were imported.  Some values may have been reset depending on Node export's configuration.", array('!total' => $total, '!count' => $count));
+
+  // Clear the page and block caches.
+  cache_clear_all();
+
   return array(
     'success' => TRUE,
     'output' => $messages,
@@ -400,14 +433,6 @@ function node_export_import($code_string, $msg_t = 't') {
 
 }
 
-/**
- * Exports a node by directly saving it.
- */
-function node_export_node_save($original_node) {
-  $node = node_export_node_clone($original_node);
-  node_export_save($node);
-  return $node->nid;
-}
 
 /**
  * Save a node object into the database.
@@ -494,8 +519,6 @@ function node_export_save(&$node) {
   // Update the node access table for this node.
   node_access_acquire_grants($node);
 
-  // Clear the page and block caches.
-  cache_clear_all();
 }
 
 /**
@@ -544,9 +567,6 @@ function node_export_node_clone($original_node) {
         $node->$key = in_array($key, $node_options);
       }
     }
-    // Let other modules do special fixing up.
-    // The function signature is: hook_node_export_node_alter(&$node, $original_node)
-    drupal_alter('node_export_node', $node, $original_node);
 
     return $node;
 

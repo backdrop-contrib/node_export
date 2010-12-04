@@ -22,18 +22,6 @@ function hook_node_export_access_alter(&$access, $node) {
 }
 
 /**
- * Manipulate a node on import/export.
- *
- * @param &$node
- *   The node to alter.
- * @param $original_node
- *   The unaltered node.
- */
-function hook_node_export_node_alter(&$node, $original_node) {
-  // no example code
-}
-
-/**
  * Override one line of the export code output.
  *
  * @param &$out
@@ -53,6 +41,20 @@ function hook_node_export_node_encode_line_alter(&$out, $tab, $key, $value, $ite
 }
 
 /**
+ * Manipulate a node on import/export.
+ *
+ * @param &$node
+ *   The node to alter.
+ * @param $original_node
+ *   The unaltered node.
+ * @param $op
+ *   'import', or 'export'.
+ */
+function hook_node_export_node_alter(&$node, $original_node, $op) {
+  // no example code
+}
+
+/**
  * Manipulate node array before export or import.
  *
  * The purpose of this is to allow a module to check nodes in the array for
@@ -61,11 +63,13 @@ function hook_node_export_node_encode_line_alter(&$out, $tab, $key, $value, $ite
  * references, and additional data required by the nodes.
  *
  * @param &$nodes
- *   The node array to alter.
+ *   The array of nodes to alter.
  * @param $op
  *   'import', 'after import', or 'export'.
+ * @param $format
+ *   The format of node code being used.
  */
-function hook_node_export(&$nodes, $op) {
+function hook_node_export_alter(&$nodes, $op, $format) {
   // no example code
 }
 
@@ -121,7 +125,17 @@ function hook_node_export_format_handlers() {
  * @param $format
  *   The format to use for export.  Check this if module does multiple formats.
  * @return
- *   The code string.
+ *   The code string in normal circumstances.  If there is a problem with the 
+ *   supplied code return an array like so:
+ *   array(
+ *     'success' => FALSE,
+ *     'output' => array("error msg 1", "error msg 2", etc...),
+ *   )
+ *   Note: Do not use the t() function on error msgs, and don't mix the error
+ *   message with dynamic variables/content, at least not in the first message
+ *   so it can be translated properly and used as the main message.  See the 
+ *   XML implementation for malformed XML imports for an example that combines
+ *   information for the user followed by generated errors from PHP.
  */
 function hook_node_export($nodes, $format) {
   // no example code
