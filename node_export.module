@@ -41,19 +41,22 @@ function node_export_menu() {
     'description' => 'Configure the settings for Node export.',
     'file' => 'node_export.pages.inc',
   );
-  if (variable_get('node_export_format', 'node_code') == '_choose') {
+  $selected_formats = variable_get('node_export_format', array('node_code'));
+  if (count(array_filter($selected_formats)) > 1) {
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
-      $items['node/%node/node_export/'. $format_handler] = array(
-        'access callback' => 'node_export_access',
-        'access arguments' => array(1),
-        'page callback' => 'node_export_gui',
-        'page arguments' => array(1, $format_handler),
-        'title' => 'Node export (' . $format['#title'] . ')',
-        'weight' => 5,
-        'type' => MENU_LOCAL_TASK,
-        'file' => 'node_export.pages.inc',
-      );
+      if ($selected_formats[$format_handler]) {
+        $items['node/%node/node_export/'. $format_handler] = array(
+          'access callback' => 'node_export_access',
+          'access arguments' => array(1),
+          'page callback' => 'node_export_gui',
+          'page arguments' => array(1, $format_handler),
+          'title' => 'Node export (' . $format['#title'] . ')',
+          'weight' => 5,
+          'type' => MENU_LOCAL_TASK,
+          'file' => 'node_export.pages.inc',
+        );
+      }
     }
   }
   else {
@@ -182,14 +185,17 @@ function node_export_node_operations() {
 
     module_load_include('inc', 'node_export', 'node_export.pages');
 
-    if (variable_get('node_export_format', 'node_code') == '_choose') {
+    $selected_formats = variable_get('node_export_format', array('node_code'));
+    if (count(array_filter($selected_formats)) > 1) {
       $format_handlers = node_export_format_handlers();
       foreach ($format_handlers as $format_handler => $format) {
-        $operations['node_export_'. $format_handler] = array(
-          'label' => t('Node export') ." (". $format['#title'] .")",
-          'callback' => 'node_export_gui',
-          'callback arguments' => array($format_handler),
-        );
+        if ($selected_formats[$format_handler]) {
+          $operations['node_export_'. $format_handler] = array(
+            'label' => t('Node export') ." (". $format['#title'] .")",
+            'callback' => 'node_export_gui',
+            'callback arguments' => array($format_handler),
+          );
+        }
       }
     }
     else {
@@ -284,7 +290,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
-  $format_handler = $format ? $format : variable_get('node_export_format', 'node_code');
+  $format_handler = $format ? $format : reset(variable_get('node_export_format', array('node_code')));
   if (!isset($format_handlers[$format_handler])) {
     $format_handler = 'node_code';
   }
@@ -353,7 +359,7 @@ function node_export_import($code_string, $msg_t = 't') {
        break;
      }
   }
-  
+
   if (isset($nodes['success']) && !$nodes['success']) {
     // Instead of returning nodes, the format handler returned an error array.
     // Translate the errors and return them.

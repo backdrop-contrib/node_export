@@ -125,17 +125,7 @@ function hook_node_export_format_handlers() {
  * @param $format
  *   The format to use for export.  Check this if module does multiple formats.
  * @return
- *   The code string in normal circumstances.  If there is a problem with the 
- *   supplied code return an array like so:
- *   array(
- *     'success' => FALSE,
- *     'output' => array("error msg 1", "error msg 2", etc...),
- *   )
- *   Note: Do not use the t() function on error msgs, and don't mix the error
- *   message with dynamic variables/content, at least not in the first message
- *   so it can be translated properly and used as the main message.  See the 
- *   XML implementation for malformed XML imports for an example that combines
- *   information for the user followed by generated errors from PHP.
+ *   The code string.
  */
 function hook_node_export($nodes, $format) {
   // no example code
@@ -148,8 +138,18 @@ function hook_node_export($nodes, $format) {
  *
  * @param $code_string
  * @return
- *   The array of nodes, or nothing if code_string or format not handled by
- *   this function.
+ *   The array of nodes, or nothing if code_string not handled by this
+ *   function.
+ *   If there is a problem with the supplied code return an array like so:
+ *   array(
+ *     'success' => FALSE,
+ *     'output' => array("error msg 1", "error msg 2", etc...),
+ *   )
+ *   Note: Do not use the t() function on error msgs, and don't mix the error
+ *   message with dynamic variables/content, at least not in the first message
+ *   so it can be translated properly and used as the main message.  See the
+ *   XML implementation for malformed XML imports for an example that combines
+ *   information for the user followed by generated errors from PHP.
  */
 function node_export_node_export_import($code_string) {
   // no example code

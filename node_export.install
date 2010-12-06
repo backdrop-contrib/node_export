@@ -49,7 +49,7 @@ function node_export_update_6300() {
       . "ensure the correct behavior and security of the module.  The import "
       . "form is now located under <a href=\"!add\">Create content</a>.",
       array(
-        '!perms' => url('admin/user/permissions'), 
+        '!perms' => url('admin/user/permissions'),
         '!config' => url('admin/settings/node_export'),
 	'!add' => url('node/add'),
       )

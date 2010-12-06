@@ -1,0 +1,6 @@
+; $Id$
+name = Node export CSV
+description = "Adds CSV format to Node export"
+dependencies[] = node_export
+core = 6.x
+package = "Node export"

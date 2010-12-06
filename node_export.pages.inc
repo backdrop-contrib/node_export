@@ -79,17 +79,18 @@ function node_export_settings() {
   foreach ($format_handlers as $format_handler => $format) {
     $format_options[$format_handler] = $format['#title'];
   }
-  $current_format = variable_get('node_export_format', 'code_string');
-  if ($current_format != "_choose" && !isset($format_handlers[$current_format])) {
-    variable_set('node_export_format', 'code_string');
+  asort($format_options);
+  $selected_formats = variable_get('node_export_format', array('node_code'));
+  if (!count(array_filter($selected_formats))) {
+    $selected_formats = array('node_code');
   }
   if (count($format_options) > 1) {
-    $format_options['_choose'] = t("Allow user to choose");
     $form['basic']['node_export_format'] = array(
-      '#type' => 'radios',
+      '#type' => 'checkboxes',
       '#title' => t('Format to use when exporting a node'),
+      '#default_value' => $selected_formats,
       '#options' => $format_options,
-      '#default_value' => variable_get('node_export_format', 'code_string'),
+      '#description' => t("If you select multiple formats, they will all be available to the user.  If you select none, or the format handler is not found, it will use the default 'Node code'.  This does not affect imports, the required import format will be used automatically."),
     );
   }
 
@@ -255,7 +256,7 @@ function node_export_form($form_state, $code_string) {
     '#rows' => 30,
     '#description' => t('Copy this code and then on the site you want to import to, go to the <em>Node export: import</em> link under <em>Content management</em>, and paste it in there.'),
     '#attributes' => array(
-      'style' => 'width: 97%;',
+      'wrap' => 'off',
     ),
   );
   return $form;
