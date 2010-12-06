@@ -1,0 +1,8 @@
+; $Id$
+name = Node export features
+description = Adds features support to Node export using UUID
+dependencies[] = node_export
+dependencies[] = uuid
+dependencies[] = features
+core = 6.x
+package = "Node export"

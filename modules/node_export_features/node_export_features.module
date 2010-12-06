@@ -1,0 +1,231 @@
+<?php 
+// $Id$
+
+/**
+ * Implementation of hook_features_api()
+ */
+function node_export_features_features_api() {
+  return array(
+    'node_export_features' => array(
+      'name' => t('Node export'),
+      'feature_source' => TRUE,
+      'default_hook' => 'node_export_features_default',
+      'default_file' => FEATURES_DEFAULTS_INCLUDED,
+      'file' => drupal_get_path('module', 'node_export_features') .'/node_export_features.features.inc',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_node_export_bulk_alter()
+ * 
+ * Maintain node reference relations
+ */
+function node_export_features_node_export_alter(&$nodes, $op) {
+  if ($op == 'export') {
+    
+    foreach ($nodes as $node) {
+      $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
+      // Create uuid if it doesnt exists
+      if (empty($uuid)) {
+        $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
+        $node->uuid = $uuid;
+      }   
+
+      $keyed_nodes[$node->nid] = $node;      
+    }
+    
+    // Keyed nodes are important for preventing same node loaded again via references
+    foreach($keyed_nodes as $node) {
+      node_export_features_load_referednode($keyed_nodes, $node);
+    }
+    
+    $nodes = array_values($keyed_nodes);
+  }
+  elseif ($op == 'import') {
+    foreach ($nodes as $node) {
+      node_export_features_set_references($node->nid, $node->uuid);
+    }
+  }
+  // Handle node insertions/updations here
+  elseif ($op == 'after import') {
+    // Now that all nodes are imported/updated we can restore the node referenced from UUIDS
+    // NOTE: This is done because if the node referenced node is new, they we have 
+    // to wait for node to be saved.
+    node_export_features_update_node_references($nodes);
+  }
+}
+
+/**
+ * Implementation of hook_node_export_node_alter() 
+ */
+function node_export_features_node_export_node_alter(&$node, $original_node, $method) {
+  $node_exists = node_get_by_uuid($node->uuid);
+  // If node already exists do a node update
+  if ($node_exists) {
+    $node->nid = $node_exists->nid;
+    $node->vid = $node_exists->vid;
+    if (variable_get('node_export_features_make_revisions', FALSE)) {
+      $node->revision = TRUE;
+    }
+  }
+}
+
+/**
+ * Recursively check for node references 
+ */
+function node_export_features_update_node_references($nodes) {
+  foreach ($nodes as $node) {
+    $uuid[$node->uuid] = $node->nid;
+  }
+
+  foreach ($nodes as $new_node) {
+    $node_reference_fields = node_export_features_get_nodereference_fields($new_node->type);
+    // If no node reference fields are available loop
+    if (empty($node_reference_fields)) {
+      continue;
+    }
+    foreach ($node_reference_fields as $node_reference_field) {
+      foreach ($node->{$node_reference_field} as $key => $node_reference) {
+        if (!empty($node_reference['nid'])) {
+          $node_uuid = node_export_features_get_references($node_reference['nid']);
+          $new_node->{$node_reference_field}[$key] = array('nid' => $uuid[$node_uuid]);
+        }
+      }
+    }
+    node_save($new_node);    
+  }
+}
+
+/**
+ * Recursively load node references 
+ */
+function node_export_features_load_referednode(&$nodes, $node) {
+  // Get list of node reference fields for this node
+  $node_reference_fields = node_export_features_get_nodereference_fields($node->type);
+  
+  // If no node reference fields are available return
+  if (empty($node_reference_fields)) {
+    return;
+  }
+  foreach ($node_reference_fields as $node_reference_field) {
+    foreach ($new_node->{$node_reference_field} as $key => $node_reference) {
+      if (!empty($node_reference['nid'])) {
+        // Load the referenced nodes only if its not already loaded
+        // This will save if from infinite loop of back references
+        if (!isset($nodes[$node_reference['nid']])) {
+          $uuid = uuid_get_uuid('node', 'nid', $node_reference['nid']);
+          // Create UUID for node reference if not already created
+          if (empty($uuid)) {
+            $uuid = uuid_set_uuid('node', 'nid', $node_reference['nid']);
+          }
+          $new_node = node_load($node_reference['nid']);
+          
+          $nodes[] = $new_node;
+          // Recursively load references of new nodes
+          node_export_features_load_referednode($nodes, $new_node);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Statically cache old node ids for mapping  
+ */
+function node_export_features_set_references($id, $uuid = NULL, $type = 'node') {
+  static $map;
+  if (isset($uuid)) {
+    $map[$type][$id] = $uuid;
+  }
+  else {
+    return $map[$type][$id];
+  }
+}
+
+function node_export_features_get_references($id) {
+  return node_export_features_set_references($id);
+}
+
+
+/**
+ * Get an array listing the names of all nodereference fields.
+ *
+ * @return
+ *   Array of all created nodereference fields
+ **/
+function node_export_features_get_nodereference_fields($content_type_name) {
+  // cache result
+  static $nodereference_fields = array();
+
+  if (empty($nodereference_fields[$content_type_name])) {
+    $ct = content_types($content_type_name);
+    $fields = $ct['fields'];
+    if (!empty($fields)) {
+      foreach ($fields as $name => $field) {
+        if ($field['type'] == 'nodereference') {
+          $nodereference_fields[$content_type_name][$name] = $name;
+        }   
+      }
+    }   
+  }
+
+  return $nodereference_fields[$content_type_name];
+}
+
+// Remove once http://drupal.org/node/858274 is resolved.
+if (!function_exists('uuid_set_uuid')) {
+  /**
+   * API function to set the UUID of an object based on its serial ID.
+   *
+   * @param $table
+   *   Base table of the object. Currently, one of node, revision_revisions,
+   *   users, vocabulary or term_data.
+   * @param $key
+   *   The name of the serial ID column.
+   * @param $serial_id
+   *   The serial ID of the object.
+   * @param $uuid
+   *   Optional UUID.  If omitted, a UUID will be generated.
+   * @return
+   *   The UUID on success, FALSE if the uuid provided is not valid.
+   */
+  function uuid_set_uuid($table, $key, $serial_id, $uuid = FALSE) {
+    if (empty($uuid)) {
+      $uuid = uuid_uuid();
+    }
+
+    if (!uuid_is_valid($uuid)) {
+      return FALSE;
+    }
+
+    $uuid_table = 'uuid_'. $table;
+    db_query("UPDATE {". $uuid_table ."} SET uuid = '%s' WHERE ". $key ." = %d", $uuid, $serial_id);
+    if (!db_affected_rows()) {
+      @db_query("INSERT INTO {". $uuid_table ."} (". $key .", uuid) VALUES (%d, '%s')", $serial_id, $uuid);
+    }
+
+    return $uuid;
+  }
+}
+
+// Remove once http://drupal.org/node/858274 is resolved.
+if (!function_exists('uuid_get_uuid')) {
+  /**
+   * API function to get the UUID of an object based on its serial ID.
+   *
+   * @param $table
+   *   Base table of the object. Currently, one of node, revision_revisions,
+   *   users, vocabulary or term_data.
+   * @param $key
+   *   The name of the serial ID column.
+   * @param $id
+   *   The serial ID of the object.
+   * @return
+   *   The UUID of the object, or FALSE if not found.
+   */
+  function uuid_get_uuid($table, $key, $id) {
+    $uuid_table = 'uuid_'. $table;
+    return db_result(db_query("SELECT uuid FROM {{$uuid_table}} WHERE $key = %d", $id));
+  }
+}
