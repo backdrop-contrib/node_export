@@ -170,7 +170,8 @@ function node_export_csv_node_export_import($code_string) {
   $array = node_export_csv_csv_to_array($code_string);
 
   // If the first two rows are of equal length, we can assume this is a CSV.
-  if (count($array[0]) == count($array[1])) {
+  // Also checks there are a decent number of fields.
+  if (count($array[0]) > 10 && count($array[0]) == count($array[1])) {
     $nodes = array();
 
     // Assume row 0 is the header, and the rest of the rows are the nodes.
