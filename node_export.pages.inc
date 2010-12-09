@@ -183,7 +183,7 @@ function node_export_gui($nodes = NULL, $format = NULL) {
 
   // Get the $code_string.
   if ($nodes) {
-    // $nodes passed in, $get the code_string.
+    // $nodes passed in, get the code_string.
     $result = node_export($nodes, $format);
     if ($result['success']) {
       $code_string = $result['output'];
@@ -242,10 +242,8 @@ function node_export_gui($nodes = NULL, $format = NULL) {
  *
  *  @param $form_state
  *    The form state.
- *  @param
+ *  @param $code_string
  *    The Node export code.
- *  @param
- *    The Node export format.
  */
 function node_export_form($form_state, $code_string) {
   $form = array();
@@ -308,31 +306,6 @@ function node_export_import_form($form_state) {
     'code' => FALSE,
   );
 
-  if (isset($form_state['storage']['values'])) {
-    $values = &$form_state['storage']['values'];
-    if ($values['file']) {
-      $file = unserialize($values['file']);
-      if (file_exists($file->filepath)) {
-        $code_string = file_get_contents($file->filepath);
-        unlink($file->filepath);
-      }
-    }
-    elseif ($values['code']) {
-      $code_string = trim($values['code']);
-    }
-  }
-
-  if (isset($code_string)) {
-    $result = node_export_import($code_string);
-    // Output the status or error messages.
-    foreach($result['output'] as $output) {
-      drupal_set_message($output, ($result['success'] ? 'status' : 'error'));
-    }
-    // We need to send this user somewhere, and we know they have permission
-    // for this page:
-    drupal_goto('node/add/node_export');
-  }
-
   $form = array();
   $form['#attributes'] = array(
     'enctype' => "multipart/form-data",
@@ -377,9 +350,11 @@ function node_export_import_form($form_state) {
  * Validate function for import form.
  */
 function node_export_import_form_validate($form, &$form_state) {
-  if ($form_state['clicked_button']['#id'] == 'edit-submit' &&
-     !$_FILES['files']['name']['file'] &&
-     !$form_state['values']['code']) {
+  if (
+    $form_state['clicked_button']['#id'] == 'edit-submit' &&
+    !$_FILES['files']['name']['file'] &&
+    !$form_state['values']['code']
+  ) {
     drupal_set_message(t('Please upload a file or paste code to import.'), 'error');
     form_set_error('', NULL);
   }
@@ -406,7 +381,29 @@ function node_export_import_form_submit($form, &$form_state) {
       drupal_set_message(t('Error: Node export could not access files directory.'), 'error');
     }
   }
-  $form_state['storage']['values'] = $form_state['values'];
+
+  if ($form_state['values']['file']) {
+    $file = unserialize($form_state['values']['file']);
+    if (file_exists($file->filepath)) {
+      $code_string = file_get_contents($file->filepath);
+      unlink($file->filepath);
+    }
+  }
+  elseif ($form_state['values']['code']) {
+    $code_string = trim($form_state['values']['code']);
+  }
+
+  if (isset($code_string)) {
+    $result = node_export_import($code_string);
+    // Output the status or error messages.
+    foreach ($result['output'] as $output) {
+      drupal_set_message($output, ($result['success'] ? 'status' : 'error'));
+    }
+    // We need to send this user somewhere, and we know they have permission
+    // for this page:
+    drupal_goto('node/add/node_export');
+  }
+
 }
 
 

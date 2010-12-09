@@ -47,7 +47,7 @@ function node_export_menu() {
     foreach ($format_handlers as $format_handler => $format) {
       if ($selected_formats[$format_handler]) {
         $items['node/%node/node_export/'. $format_handler] = array(
-          'access callback' => 'node_export_access',
+          'access callback' => 'node_export_access_check',
           'access arguments' => array(1),
           'page callback' => 'node_export_gui',
           'page arguments' => array(1, $format_handler),
@@ -61,7 +61,7 @@ function node_export_menu() {
   }
   else {
     $items['node/%node/node_export'] = array(
-      'access callback' => 'node_export_access',
+      'access callback' => 'node_export_access_check',
       'access arguments' => array(1),
       'page callback' => 'node_export_gui',
       'page arguments' => array(1),
@@ -79,17 +79,6 @@ function node_export_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'node_export.pages.inc',
   );
-  /*
-  $items['admin/content/node_export_import'] = array(
-    'access arguments' => array('use PHP to import nodes'),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('node_export_import_form'),
-    'title' => 'Node export: import',
-    'type' => MENU_NORMAL_ITEM,
-    'description' => 'Import nodes that were exported with <em>Node export</em>.',
-    'file' => 'node_export.pages.inc',
-  );
-  */
   $items['node/add/node_export'] = array(
     'title' => 'Node export: import',
     'page callback' => 'drupal_get_form',
@@ -105,7 +94,7 @@ function node_export_menu() {
 /**
  * Check access to export a node.
  */
-function node_export_access($node) {
+function node_export_access_check($node) {
   global $user;
   if (is_int($node)) {
     $node = node_load($node);
@@ -118,20 +107,20 @@ function node_export_access($node) {
   $access = $access && (node_export_is_permitted($node->type) && filter_access($node->format) && node_access('create', $node->type));
   // Let other modules alter this - for exmple to only allow some users
   // to export specific nodes or types.
-  drupal_alter("node_export_access", $access, $node);
+  drupal_alter("node_export_access_check", $access, $node);
   return $access;
 }
 
 /**
  * Check access to export an array of nodes.
  */
-function node_export_access_nodes($nodes) {
+function node_export_access_check_nodes($nodes) {
   // Convert to array if it isn't already.
   if (is_object($nodes)) {
     $nodes = array($nodes);
   }
   foreach ($nodes as &$node) {
-    if (!node_export_access($node)) {
+    if (!node_export_access_check($node)) {
       return FALSE;
     }
   }
@@ -241,7 +230,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   foreach ($nids as $nid) {
     $original_node = node_load($nid);
 
-    if (!node_export_access($original_node)) {
+    if (!node_export_access_check($original_node)) {
       // Halt exporting.
       $error = $msg_t("You do not have permission to perform a Node export on one or more of these nodes.  No nodes exported.");
       return array(
@@ -349,15 +338,15 @@ function node_export_import($code_string, $msg_t = 't') {
   $nodes = array();
   $used_format = "";
   foreach ($format_handlers as $format_handler => $format) {
-     $nodes = module_invoke(
-       $format_handlers[$format_handler]['#module'],
-       'node_export_import',
-       $code_string
-     );
-     if (!empty($nodes)) {
-       $used_format = $format_handler;
-       break;
-     }
+    $nodes = module_invoke(
+      $format_handlers[$format_handler]['#module'],
+      'node_export_import',
+      $code_string
+    );
+    if (!empty($nodes)) {
+      $used_format = $format_handler;
+      break;
+    }
   }
 
   if (isset($nodes['success']) && !$nodes['success']) {
@@ -397,7 +386,7 @@ function node_export_import($code_string, $msg_t = 't') {
     );
   }
 
-  if (!node_export_access_nodes($nodes)) {
+  if (!node_export_access_check_nodes($nodes)) {
     // There was a problem with permissions.
     $error = $msg_t(
       'You do not have permission to perform a Node export: import on one or more of these nodes.  No nodes imported.'
@@ -411,7 +400,7 @@ function node_export_import($code_string, $msg_t = 't') {
   $count = 0;
   $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $nodes, 'import', $used_format);
+  drupal_alter('node_export', $import, 'import', $used_format);
   $new_nodes = array();
   $new_nid = 0;
   $messages = array();
@@ -491,7 +480,7 @@ function node_export_save(&$node) {
     $node->created = time();
   }
 
-  // The update of the changed value is forced in the original node_export().
+  // The update of the changed value is forced in the original node_save().
   if (empty($node->changed)) {
     $node->changed = time();
   }
@@ -617,50 +606,50 @@ function node_export_get_menu($node) {
  * Remove recursion problem from an object or array.
  */
 function node_export_remove_recursion($o) {
-   static  $replace;
-   if (!isset($replace)) {
-   $replace = create_function(
-         '$m',
-         '$r="\x00{$m[1]}ecursion_export_node_";return \'s:\'.strlen($r.$m[2]).\':"\'.$r.$m[2].\'";\';'
-      );
-   }
-   if (is_array($o) || is_object($o)) {
-      $re = '#(r|R):([0-9]+);#';
-      $serialize = serialize($o);
-      if (preg_match($re, $serialize)) {
-         $last = $pos = 0;
-         while (false !== ($pos = strpos($serialize, 's:', $pos))) {
-            $chunk = substr($serialize, $last, $pos - $last);
-            if (preg_match($re, $chunk)) {
-               $length = strlen($chunk);
-               $chunk = preg_replace_callback($re, $replace, $chunk);
-               $serialize = substr($serialize, 0, $last) . $chunk . substr($serialize, $last + ($pos - $last));
-               $pos += strlen($chunk) - $length;
-            }
-            $pos += 2;
-            $last = strpos($serialize, ':', $pos);
-            $length = substr($serialize, $pos, $last - $pos);
-            $last += 4 + $length;
-            $pos = $last;
-         }
-         $serialize = substr($serialize, 0, $last) . preg_replace_callback($re, $replace, substr($serialize, $last));
-         $o = unserialize($serialize);
+  static $replace;
+  if (!isset($replace)) {
+    $replace = create_function(
+      '$m',
+      '$r="\x00{$m[1]}ecursion_export_node_";return \'s:\'.strlen($r.$m[2]).\':"\'.$r.$m[2].\'";\';'
+    );
+  }
+  if (is_array($o) || is_object($o)) {
+    $re = '#(r|R):([0-9]+);#';
+    $serialize = serialize($o);
+    if (preg_match($re, $serialize)) {
+      $last = $pos = 0;
+      while (false !== ($pos = strpos($serialize, 's:', $pos))) {
+        $chunk = substr($serialize, $last, $pos - $last);
+        if (preg_match($re, $chunk)) {
+          $length = strlen($chunk);
+          $chunk = preg_replace_callback($re, $replace, $chunk);
+          $serialize = substr($serialize, 0, $last) . $chunk . substr($serialize, $last + ($pos - $last));
+          $pos += strlen($chunk) - $length;
+        }
+        $pos += 2;
+        $last = strpos($serialize, ':', $pos);
+        $length = substr($serialize, $pos, $last - $pos);
+        $last += 4 + $length;
+        $pos = $last;
       }
-   }
-   return $o;
+      $serialize = substr($serialize, 0, $last) . preg_replace_callback($re, $replace, substr($serialize, $last));
+      $o = unserialize($serialize);
+    }
+  }
+  return $o;
 }
 
 /**
  * Restore recursion to an object or array.
  */
 function node_export_restore_recursion($o) {
-    return unserialize(
-        preg_replace(
-            '#s:[0-9]+:"\x00(r|R)ecursion_export_node_([0-9]+)";#',
-            '\1:\2;',
-            serialize($o)
-        )
-    );
+  return unserialize(
+    preg_replace(
+      '#s:[0-9]+:"\x00(r|R)ecursion_export_node_([0-9]+)";#',
+      '\1:\2;',
+      serialize($o)
+    )
+  );
 }
 
 /**

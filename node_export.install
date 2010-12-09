@@ -51,7 +51,7 @@ function node_export_update_6300() {
       array(
         '!perms' => url('admin/user/permissions'),
         '!config' => url('admin/settings/node_export'),
-	'!add' => url('node/add'),
+        '!add' => url('node/add'),
       )
     ),
     'warning'

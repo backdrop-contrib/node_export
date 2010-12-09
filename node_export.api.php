@@ -17,7 +17,7 @@
  * @param $node
  *   The node to determine access for.
  */
-function hook_node_export_access_alter(&$access, $node) {
+function hook_node_export_access_check_alter(&$access, $node) {
   // no example code
 }
 

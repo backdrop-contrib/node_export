@@ -64,16 +64,16 @@ function node_export_drush_command() {
  * A function to help alias commands as other commands.
  */
 function node_export_drush_command_add_alias(&$items, $command, $alias) {
-   // Create a property on the command for adding aliases, if not there.
-   if (!isset($items[$command]['node_export command aliases'])) {
-      $items[$command]['node_export command aliases'] = array();
-   }
-   // Record the alias into that property.
-   $items[$command]['node_export command aliases'][] = $alias;
-   // Create the alias as a new command.
-   $items[$alias] = $items[$command];
-   // Indicate what this new command is an alias for.
-   $items[$alias]['node_export alias for'] = $command;
+  // Create a property on the command for adding aliases, if not there.
+  if (!isset($items[$command]['node_export command aliases'])) {
+    $items[$command]['node_export command aliases'] = array();
+  }
+  // Record the alias into that property.
+  $items[$command]['node_export command aliases'][] = $alias;
+  // Create the alias as a new command.
+  $items[$alias] = $items[$command];
+  // Indicate what this new command is an alias for.
+  $items[$alias]['node_export alias for'] = $command;
 }
 
 /**
@@ -197,10 +197,10 @@ function node_export_drush_callback_export() {
       $nid_filters['php'] = $result;
     }
     else {
-       $nid_filters['php'] = explode(
-         ",",
-         str_replace(array("\n", "\r", "\t", " "), '', $result)
-       );
+      $nid_filters['php'] = explode(
+        ",",
+        str_replace(array("\n", "\r", "\t", " "), '', $result)
+      );
     }
   }
 
@@ -208,7 +208,7 @@ function node_export_drush_callback_export() {
      // Compute the intersect of all $nid_filters if there are more than one.
     $nids = call_user_func_array('array_intersect', $nid_filters);
   }
-  else if (count($nid_filters) == 1) {
+  elseif (count($nid_filters) == 1) {
     // Use the only filter if there is only one.
     $nids = reset($nid_filters);
   }

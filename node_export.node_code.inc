@@ -24,7 +24,7 @@ function node_export_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export.
+ * Implementation of hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -37,7 +37,7 @@ function node_export_node_export($nodes, $format) {
 }
 
 /**
- * Implementation of hook_node_export_import.
+ * Implementation of hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
@@ -113,7 +113,7 @@ function node_export_node_code_decode_objects($array) {
       $array[$k] = node_export_node_code_decode_objects($v);
     }
   }
-  if ($array['#_export_node_encode_object']) {
+  if (isset($array['#_export_node_encode_object'])) {
     unset($array['#_export_node_encode_object']);
     $array = (object)$array;
   }

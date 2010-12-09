@@ -23,7 +23,7 @@ function node_export_xml_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export.
+ * Implementation of hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -36,7 +36,7 @@ function node_export_xml_node_export($nodes, $format) {
 }
 
 /**
- * Implementation of hook_node_export_import.
+ * Implementation of hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
@@ -50,7 +50,7 @@ function node_export_xml_node_export_import($code_string) {
 
     // Convert the nodes into objects.
     if (!isset($result['success'])) {
-      foreach($result as $k => $v) {
+      foreach ($result as $k => $v) {
         $result[$k] = (object)$v;
       }
     }
@@ -63,9 +63,10 @@ function node_export_xml_node_export_import($code_string) {
  * Build XML string recursively.
  */
 function node_export_xml_encode($var, $iteration = 0) {
+  $xml_code = "";
   $tab = '';
   for ($i = 0; $i <= $iteration; $i++) {
-    $tab = $tab ."  ";
+    $tab = $tab . "  ";
   }
   $iteration++;
   foreach ($var as $key => $value) {
@@ -86,21 +87,22 @@ function node_export_xml_encode($var, $iteration = 0) {
       }
       $value = (array)$value;
     }
+    if (is_array($value) && array_values($value) === $value) {
+      $attributes['_numeric_keys'] = "1";
+    }
     $attr_string = "";
     foreach ($attributes as $attr_name => $attr_value) {
-      $attr_string .= ' '. $attr_name .'="'. $attr_value .'"';
+      $attr_string .= ' ' . $attr_name . '="' . $attr_value . '"';
     }
-    if (!is_array($value) || !is_numeric($key)) {
-      $xml_code .= $tab ."<". $key . $attr_string .">";
+
+    if (is_numeric($key)) {
+      $key = "n" . $key;
     }
+    $xml_code .= $tab . "<" . $key . $attr_string . ">";
+
     if (is_array($value)) {
       if (!empty($value)) {
-        if (!is_numeric($key)) {
-          $xml_code .= "\n";
-        }
-        else {
-          $iteration--;
-        }
+        $xml_code .= "\n";
         $xml_code .= node_export_xml_encode($value, $iteration);
         if (!is_numeric($key)) {
           $xml_code .= $tab;
@@ -116,9 +118,7 @@ function node_export_xml_encode($var, $iteration = 0) {
     elseif (is_string($value)) {
       $xml_code .= htmlspecialchars($value);
     }
-    if (!is_array($value) || !is_numeric($key)) {
-      $xml_code .= "</". $key .">\n";
-    }
+    $xml_code .= "</" . $key . ">\n";
   }
   return $xml_code;
 }
@@ -140,7 +140,7 @@ class NodeExportXmlDecoder {
         'attributes' => array(),
         'children' => array(),
         'data' => ''
-       )
+      )
     );
     if (!xml_parse($parser, $code_string)) {
       $errors[] = "Node export XML import was unsuccessful, error details follow.  No nodes imported.";
@@ -188,6 +188,9 @@ class NodeExportXmlDecoder {
         // Associative array.
         $children = array();
         foreach ($stack['children'] as $child) {
+          if (!empty($stack['attributes']['_NUMERIC_KEYS'])) {
+            $child['name'] = intval(substr($child['name'], 1));
+          }
           $children[$child['name']] = $this->build($child);
         }
       }

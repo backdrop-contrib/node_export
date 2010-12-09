@@ -61,7 +61,7 @@ function node_export_file_form_alter(&$form, $form_state, $form_id) {
       '#prefix' => '<div id="node-export-file-mode-message"><div class="message warning" style="display: ' . ($mode_message_display ? 'block' : 'none') . ';">' . t('Warning, "Inside export code (base 64 encoded string)" mode generates much larger exports.  For this reason it is recommended you set the export code delivery methods to "Text file download".') . '</div></div>',
     );
 
-    $form['node_export_file']['node_export_file_assets_path'] = array(
+    $form['file']['node_export_file_assets_path'] = array(
       '#type' => 'textfield',
       '#title' => t('Export FileField assets path'),
       '#size' => 60,

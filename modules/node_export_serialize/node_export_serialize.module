@@ -23,7 +23,7 @@ function node_export_serialize_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export.
+ * Implementation of hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -32,7 +32,7 @@ function node_export_serialize_node_export($nodes, $format) {
 }
 
 /**
- * Implementation of hook_node_export_import.
+ * Implementation of hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
