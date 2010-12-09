@@ -9,7 +9,7 @@
  */
 
 /**
- * Implementation of hook_node_export_format_handlers().
+ * Implements hook_node_export_format_handlers().
  *
  * @see hook_node_export_format_handlers()
  */
@@ -23,7 +23,23 @@ function node_export_csv_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export().
+ * Implements hook_module_implements_alter().
+ *
+ * @see hook_module_implements_alter()
+ */
+function node_export_csv_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'node_export_import') {
+    // Move node_export_csv_node_export_import() to the end of the list.=
+    // Node export CSV is slow to fire on imports, so this allows other
+    // modules to respond first.
+    $group = $implementations['node_export_csv'];
+    unset($implementations['node_export_csv']);
+    $implementations['node_export_csv'] = $group;
+  }
+}
+
+/**
+ * Implements hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -106,7 +122,7 @@ function node_export_csv_encode_sanitize_value($var) {
     }
     elseif (is_string($var)) {
       //return '"'. $var .'"';
-      return "'". strtr($var, array("'" => "\\'")) ."'";
+      return "'" . strtr($var, array("'" => "\\'")) . "'";
     }
     else {
       return '';
@@ -123,10 +139,10 @@ function node_export_csv_encode_header_value($parents, $var, $k) {
     $header_value = $k;
   }
   elseif (is_object($var)) {
-    $header_value = $parents ."->". $k;
+    $header_value = $parents . "->" . $k;
   }
   elseif (is_array($var)) {
-    $header_value = $parents ."['". $k ."']";
+    $header_value = $parents . "['" . $k . "']";
   }
   return $header_value;
 }
@@ -160,7 +176,7 @@ function node_export_csv_encode_array_insert_at(&$array, $new, $position) {
 }
 
 /**
- * Implementation of hook_node_export_import().
+ * Implements hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
@@ -181,7 +197,7 @@ function node_export_csv_node_export_import($code_string) {
     foreach ($array as &$row) {
       $node = (object)array();
       foreach ($row as $key => $item) {
-        eval('$node->'. $header[$key] .' = '. $item .';');
+        eval('$node->' . $header[$key] . ' = ' . $item . ';');
       }
       $nodes[] = $node;
     }
