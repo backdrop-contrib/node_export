@@ -12,7 +12,7 @@
 define("NODE_EXPORT", "node-export");
 
 /**
- * Implementation of hook_token_values().
+ * Implements hook_token_values().
  */
 function node_export_token_values($type, $object = NULL, $options = array()) {
   if ($type == 'Node export filename') {
@@ -24,7 +24,7 @@ function node_export_token_values($type, $object = NULL, $options = array()) {
 }
 
 /**
- * Implementation of hook_token_list().
+ * Implements hook_token_list().
  */
 function node_export_token_list($type = 'all') {
   if ($type == 'Node export filename') {
@@ -43,14 +43,14 @@ function node_export_token_list($type = 'all') {
  */
 function node_export_settings_token_bits(&$form, $key, $group = 'basic') {
   if (module_exists('token')) {
-    $form[$group][$key .'_token_help'] = array(
+    $form[$group][$key . '_token_help'] = array(
       '#title' => t('Replacement patterns'),
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form[$group][$key .'_token_help']['help'] = array(
-      '#value' => theme('token_help', 'Node export filename'),
+    $form[$group][$key . '_token_help']['help'] = array(
+      '#markup' => theme('token_help', 'Node export filename'),
     );
   }
   else {
@@ -65,7 +65,7 @@ function node_export_settings_token_bits(&$form, $key, $group = 'basic') {
  * Menu callback to configure module settings.
  */
 function node_export_settings() {
-  $types = node_get_types('names');
+  $types = node_type_get_names();
 
   menu_rebuild();
 
@@ -136,35 +136,35 @@ function node_export_settings() {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['publishing'][$type]['node_export_reset_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Publishing options (status, moderate, promote, sticky, and revision)'),
-      '#default_value' => variable_get('node_export_reset_'. $type, FALSE),
+      '#default_value' => variable_get('node_export_reset_' . $type, FALSE),
     );
-    $form['publishing'][$type]['node_export_reset_created_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_created_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Created time (<em>Authored on</em> date/time)'),
-      '#default_value' => variable_get('node_export_reset_created_'. $type, TRUE),
+      '#default_value' => variable_get('node_export_reset_created_' . $type, TRUE),
     );
-    $form['publishing'][$type]['node_export_reset_changed_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_changed_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Changed time (<em>Last updated</em> date/time)'),
-      '#default_value' => variable_get('node_export_reset_changed_'. $type, TRUE),
+      '#default_value' => variable_get('node_export_reset_changed_' . $type, TRUE),
     );
-    $form['publishing'][$type]['node_export_reset_menu_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_menu_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Menu link'),
-      '#default_value' => variable_get('node_export_reset_menu_'. $type, TRUE),
+      '#default_value' => variable_get('node_export_reset_menu_' . $type, TRUE),
     );
-    $form['publishing'][$type]['node_export_reset_path_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_path_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('URL path'),
-      '#default_value' => variable_get('node_export_reset_path_'. $type, TRUE),
+      '#default_value' => variable_get('node_export_reset_path_' . $type, TRUE),
     );
-    $form['publishing'][$type]['node_export_reset_book_mlid_'. $type] = array(
+    $form['publishing'][$type]['node_export_reset_book_mlid_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Book menu link'),
-      '#default_value' => variable_get('node_export_reset_book_mlid_'. $type, TRUE),
+      '#default_value' => variable_get('node_export_reset_book_mlid_' . $type, TRUE),
     );
   }
 
@@ -178,12 +178,14 @@ function node_export_settings() {
  *    A node, an array of nodes, or an array of nids.
  *  @param $format
  *    The node export format.
+ *
+ *  @return
+ *    The node export form or nothing if calling function to serve file.
  */
 function node_export_gui($nodes = NULL, $format = NULL) {
-
   // Get the $code_string.
   if ($nodes) {
-    // $nodes passed in, $get the code_string.
+    // $nodes passed in, get the code_string.
     $result = node_export($nodes, $format);
     if ($result['success']) {
       $code_string = $result['output'];
@@ -204,7 +206,7 @@ function node_export_gui($nodes = NULL, $format = NULL) {
   if (variable_get('node_export_code', 'copy') == 'copy') {
     if (is_object($nodes)) {
       // Single node, output straight away.
-      drupal_set_title(t('Node export of !title', array('!title' => check_plain($nodes->title))));
+      drupal_set_title(t('Node export of !title', array('!title' => $nodes->title)));
       return drupal_get_form('node_export_form', $code_string);
     }
     elseif ($nodes) {
@@ -238,23 +240,26 @@ function node_export_gui($nodes = NULL, $format = NULL) {
 }
 
 /**
- *  Export Form.
+ * Export Form.
  *
- *  @param $form_state
- *    The form state.
- *  @param
- *    The Node export code.
- *  @param
- *    The Node export format.
+ * @param $form
+ *   The form array.
+ * @param $form_state
+ *   The form state.
+ * @param $code_string
+ *   The Node export code.
+ *
+ * @return
+ *   The built form array.
  */
-function node_export_form($form_state, $code_string) {
+function node_export_form($form, &$form_state, $code_string) {
   $form = array();
   $form['export'] = array(
     '#type' => 'textarea',
     '#title' => t('Node export code'),
     '#default_value' => $code_string,
     '#rows' => 30,
-    '#description' => t('Copy this code and then on the site you want to import to, go to the <em>Node export: import</em> link under <em>Content management</em>, and paste it in there.'),
+    '#description' => t('Copy this code and then on the site you want to import to, go to the <em>Node export: import</em> link under <em>Add content</em>, and paste it in there.'),
     '#attributes' => array(
       'wrap' => 'off',
     ),
@@ -273,11 +278,11 @@ function node_export_form($form_state, $code_string) {
 function node_export_get_file($nids, $code_string) {
   $filename_data = array();
   $filename_data['count'] = count($nids);
-  $filename_data['time'] = time();
+  $filename_data['time'] = REQUEST_TIME;
 
   // Add a list of nids
   if (count($nids) <= variable_get('node_export_file_list', 10)) {
-    $filename_data['list'] = '['. implode(',', $nids) .']';
+    $filename_data['list'] = '[' . implode(',', $nids) . ']';
   }
   $name = variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export');
   if (module_exists('token')) {
@@ -290,7 +295,7 @@ function node_export_get_file($nids, $code_string) {
     $name = str_replace('[timestamp]', $filename_data['time'], $name);
   }
   header('Content-type: text/plain');
-  header('Content-Disposition: attachment; filename="'. $name .'"');
+  header('Content-Disposition: attachment; filename="' . $name . '"');
   print($code_string);
   // Clean exit.
   module_invoke_all('exit');
@@ -298,9 +303,17 @@ function node_export_get_file($nids, $code_string) {
 }
 
 /**
- * Import Form
+ * Import Form.
+ *
+ *  @param $form
+ *    The form array.
+ *  @param $form_state
+ *    The form state.
+ *
+ *  @return
+ *    The built form array.
  */
-function node_export_import_form($form_state) {
+function node_export_import_form($form, &$form_state) {
 
   // Initialise to prevent notices
   $values = array(
@@ -308,37 +321,12 @@ function node_export_import_form($form_state) {
     'code' => FALSE,
   );
 
-  if (isset($form_state['storage']['values'])) {
-    $values = &$form_state['storage']['values'];
-    if ($values['file']) {
-      $file = unserialize($values['file']);
-      if (file_exists($file->filepath)) {
-        $code_string = file_get_contents($file->filepath);
-        unlink($file->filepath);
-      }
-    }
-    elseif ($values['code']) {
-      $code_string = trim($values['code']);
-    }
-  }
-
-  if (isset($code_string)) {
-    $result = node_export_import($code_string);
-    // Output the status or error messages.
-    foreach($result['output'] as $output) {
-      drupal_set_message($output, ($result['success'] ? 'status' : 'error'));
-    }
-    // We need to send this user somewhere, and we know they have permission
-    // for this page:
-    drupal_goto('node/add/node_export');
-  }
-
   $form = array();
   $form['#attributes'] = array(
     'enctype' => "multipart/form-data",
   );
   $form['#prefix'] = "<p>";
-  $form['#prefix'] .= t('You may import content by pasting or uploading the code exported from Node export.') ." ";
+  $form['#prefix'] .= t('You may import content by pasting or uploading the code exported from Node export.') . " ";
   $form['#prefix'] .= t("Some values may be reset during imports depending on Node export's configuration.");
   $form['#prefix'] .= "</p>";
 
@@ -364,12 +352,16 @@ function node_export_import_form($form_state) {
     '#rows' => 30,
     '#description' => t('Cut and paste the code of an exported node here.'),
   );
-  $form['#redirect'] = FALSE;
-  $form['submit'] = array(
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Import'),
-    '#suffix' => l(t('Reset the form'), $_GET['q']),
   );
+  $form['actions']['reset'] = array(
+    '#markup' => l(t('Reset the form'), $_GET['q']),
+  );
+
   return $form;
 }
 
@@ -377,9 +369,11 @@ function node_export_import_form($form_state) {
  * Validate function for import form.
  */
 function node_export_import_form_validate($form, &$form_state) {
-  if ($form_state['clicked_button']['#id'] == 'edit-submit' &&
-     !$_FILES['files']['name']['file'] &&
-     !$form_state['values']['code']) {
+  if (
+    $form_state['clicked_button']['#id'] == 'edit-submit' &&
+    !$_FILES['files']['name']['file'] &&
+    !$form_state['values']['code']
+  ) {
     drupal_set_message(t('Please upload a file or paste code to import.'), 'error');
     form_set_error('', NULL);
   }
@@ -391,8 +385,8 @@ function node_export_import_form_validate($form, &$form_state) {
 function node_export_import_form_submit($form, &$form_state) {
   if ($_FILES['files']['name']['file']) {
     $original = $_FILES['files']['name']['file'];
-    $directory = file_directory_path() .'/'. NODE_EXPORT;
-    if (file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
+    $directory = 'public:/' . NODE_EXPORT;
+    if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       $save = file_save_upload('file', array(), $directory, FILE_EXISTS_RENAME);
       if (!$save) {
         drupal_set_message(t('Error: Node export could not save file.'), 'error');
@@ -406,7 +400,29 @@ function node_export_import_form_submit($form, &$form_state) {
       drupal_set_message(t('Error: Node export could not access files directory.'), 'error');
     }
   }
-  $form_state['storage']['values'] = $form_state['values'];
+
+  if ($form_state['values']['file']) {
+    $file = unserialize($form_state['values']['file']);
+    if (file_exists($file->filepath)) {
+      $code_string = file_get_contents($file->filepath);
+      unlink($file->filepath);
+    }
+  }
+  elseif ($form_state['values']['code']) {
+    $code_string = trim($form_state['values']['code']);
+  }
+
+  if (isset($code_string)) {
+    $result = node_export_import($code_string);
+    // Output the status or error messages.
+    foreach ($result['output'] as $output) {
+      drupal_set_message($output, ($result['success'] ? 'status' : 'error'));
+    }
+    // We need to send this user somewhere, and we know they have permission
+    // for this page:
+    drupal_goto('node/add/node_export');
+  }
+
 }
 
 

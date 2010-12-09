@@ -10,7 +10,7 @@
 
 
 /**
- * Implementation of hook_node_export_format_handlers().
+ * Implements hook_node_export_format_handlers().
  *
  * @see hook_node_export_format_handlers()
  */
@@ -24,7 +24,7 @@ function node_export_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export.
+ * Implements hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -33,11 +33,11 @@ function node_export_node_export($nodes, $format) {
   foreach ($nodes as $node) {
     $node_codes[] = node_export_node_code_encode($node);
   }
-  return "array(\n  ". implode(",\n    ", $node_codes) .",\n)";
+  return "array(\n  " . implode(",\n    ", $node_codes) . ",\n)";
 }
 
 /**
- * Implementation of hook_node_export_import.
+ * Implements hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
@@ -45,7 +45,7 @@ function node_export_node_export_import($code_string) {
   // Check for "array(" at the start.
   if (substr(ltrim($code_string), 0, 6) == "array(") {
     // Default node decoding.
-    $array = eval('return '. $code_string .';');
+    $array = eval('return ' . $code_string . ';');
     // Ensure array has a value before doing anything else.
     if ($array) {
       // Handle importing of objects.
@@ -69,7 +69,7 @@ function node_export_node_code_encode($var, $iteration = 0) {
   // Default node encoding.
   $tab = '';
   for ($i = 0; $i <= $iteration; $i++) {
-    $tab = $tab ."  ";
+    $tab = $tab . "  ";
   }
   $iteration++;
   if (is_object($var)) {
@@ -78,19 +78,19 @@ function node_export_node_code_encode($var, $iteration = 0) {
   }
   if (is_array($var)) {
     $empty = empty($var);
-    $code = "array(". ($empty ? '' : "\n");
+    $code = "array(" . ($empty ? '' : "\n");
     foreach ($var as $key => $value) {
-      $out = $tab ."  '". $key ."' => ". node_export_node_code_encode($value, $iteration) .",\n";
+      $out = $tab . "  '" . $key . "' => " . node_export_node_code_encode($value, $iteration) . ",\n";
       drupal_alter('node_export_node_code_encode_line', $out, $tab, $key, $value, $iteration);
       $code .= $out;
     }
-    $code .= ($empty ? '' : $tab) .")";
+    $code .= ($empty ? '' : $tab) . ")";
     return $code;
   }
   else {
     if (is_string($var)) {
       // Escape single quotes so we don't accidentally exit the string.
-      return "'". strtr($var, array("'" => "\\'")) ."'";
+      return "'" . strtr($var, array("'" => "\\'")) . "'";
     }
     elseif (is_numeric($var)) {
       return $var;
@@ -113,7 +113,7 @@ function node_export_node_code_decode_objects($array) {
       $array[$k] = node_export_node_code_decode_objects($v);
     }
   }
-  if ($array['#_export_node_encode_object']) {
+  if (isset($array['#_export_node_encode_object'])) {
     unset($array['#_export_node_encode_object']);
     $array = (object)$array;
   }

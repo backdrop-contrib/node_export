@@ -2,5 +2,5 @@
 name = Node export XML
 description = "Adds XML format to Node export"
 dependencies[] = node_export
-core = 6.x
+core = 7.x
 package = "Node export"

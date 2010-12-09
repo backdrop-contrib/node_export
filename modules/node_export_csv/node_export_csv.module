@@ -9,7 +9,7 @@
  */
 
 /**
- * Implementation of hook_node_export_format_handlers().
+ * Implements hook_node_export_format_handlers().
  *
  * @see hook_node_export_format_handlers()
  */
@@ -23,7 +23,7 @@ function node_export_csv_node_export_format_handlers() {
 }
 
 /**
- * Implementation of hook_node_export.
+ * Implements hook_node_export().
  *
  * @see hook_node_export()
  */
@@ -106,7 +106,7 @@ function node_export_csv_encode_sanitize_value($var) {
     }
     elseif (is_string($var)) {
       //return '"'. $var .'"';
-      return "'". strtr($var, array("'" => "\\'")) ."'";
+      return "'" . strtr($var, array("'" => "\\'")) . "'";
     }
     else {
       return '';
@@ -123,10 +123,10 @@ function node_export_csv_encode_header_value($parents, $var, $k) {
     $header_value = $k;
   }
   elseif (is_object($var)) {
-    $header_value = $parents ."->". $k;
+    $header_value = $parents . "->" . $k;
   }
   elseif (is_array($var)) {
-    $header_value = $parents ."['". $k ."']";
+    $header_value = $parents . "['" . $k . "']";
   }
   return $header_value;
 }
@@ -160,14 +160,14 @@ function node_export_csv_encode_array_insert_at(&$array, $new, $position) {
 }
 
 /**
- * Implementation of hook_node_export_import.
+ * Implements hook_node_export_import().
  *
  * @see hook_node_export_import()
  */
 function node_export_csv_node_export_import($code_string) {
 
   // Get array data from CSV.
-  $array = node_export_csv_csv_to_array($code_string);
+  $array = @node_export_csv_csv_to_array($code_string);
 
   // If the first two rows are of equal length, we can assume this is a CSV.
   // Also checks there are a decent number of fields.
@@ -178,10 +178,10 @@ function node_export_csv_node_export_import($code_string) {
     $header = array_shift($array);
 
     // Build the nodes.
-    foreach($array as &$row) {
+    foreach ($array as &$row) {
       $node = (object)array();
       foreach ($row as $key => $item) {
-         eval('$node->'. $header[$key] .' = '. $item .';');
+        eval('$node->' . $header[$key] . ' = ' . $item . ';');
       }
       $nodes[] = $node;
     }
@@ -260,30 +260,30 @@ function node_export_csv_csv_to_array($string, $seperator = ',', $enclosure = '"
         $position++;
         $escape = FALSE;
         $double_escape = FALSE;
-     }
-   }
-   elseif ($c == $enclosure) {
-     if ($double_escape) {
-       $out_item[$position] .= $enclosure;
-       $double_escape = FALSE;
-     }
-     if ($escape) {
-       $escape = FALSE;
-       $double_escape = TRUE;
-     }
-     else {
-       $escape = TRUE;
-       $double_escape = FALSE;
-     }
-   }
-   else {
-     if ($double_escape) {
-       $out_item[$position] .= $enclosure;
-       $double_escape = FALSE;
-     }
-     $out_item[$position] .= $c;
-   }
-   $i++;
+      }
+    }
+    elseif ($c == $enclosure) {
+      if ($double_escape) {
+        $out_item[$position] .= $enclosure;
+        $double_escape = FALSE;
+      }
+      if ($escape) {
+        $escape = FALSE;
+        $double_escape = TRUE;
+      }
+      else {
+        $escape = TRUE;
+        $double_escape = FALSE;
+      }
+    }
+    else {
+      if ($double_escape) {
+        $out_item[$position] .= $enclosure;
+        $double_escape = FALSE;
+      }
+      $out_item[$position] .= $c;
+    }
+    $i++;
   }
   if (!empty($out_item)) {
     $lines[] = $out_item;

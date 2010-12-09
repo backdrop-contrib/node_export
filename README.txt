@@ -16,9 +16,11 @@ INTRODUCTION
 This module allows users to export nodes and then import it into another
 Drupal installation, or on the same site.
 
-This module makes reasonable checks on access permissions.  A user cannot export 
-a node unless they can use the input format of that node, and unless they have
-permission to create new nodes of that type.
+This module allows user to export/import nodes if they have the 'export nodes'
+or 'export own nodes' permission, have node access to view the node and create
+the node type, and the node type is not omitted in node export's settings. The
+module does not check access to the filter formats used by the node's fields,
+please keep this in mind when assigning permissions to user roles.
 
 Maintainer: Daniel Braksator (http://drupal.org/user/134005)
 Project page: http://drupal.org/project/node_export.
@@ -33,7 +35,9 @@ http://drupal.org/node/73381#comment-137714
 INSTALLATION
 ------------
 1. Copy node_export folder to modules directory (usually sites/all/modules).
-2. At admin/build/modules enable the Node export module.
+2. At admin/build/modules enable the Node export module in the Node export 
+   package.
+3. Enable any other modules in the Node export package that tickle your fancy.
 
 
 CONFIGURATION
@@ -45,6 +49,8 @@ CONFIGURATION
    give this permission to a typical node author, only the administrator or
    developer should use this feature.  You may even like to turn this module
    off when it is no longer required.
+   This module does not check access to the filter formats used by the node's
+   fields, please keep this in mind when assigning permissions to user roles.
 2. Configure module at admin/settings/node_export.
 
 
@@ -57,6 +63,6 @@ USAGE
    c) Use the VBO module: http://drupal.org/project/views_bulk_operations
    d) Use Drush: http://drupal.org/project/drush
 2. To import nodes, either:
-   a) Use the form at 'Node export: import' under 'Create content'
+   a) Use the form at 'Node export: import' under 'Add content'
       (node/add/node_export).
    b) Use Drush: http://drupal.org/project/drush

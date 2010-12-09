@@ -7,7 +7,7 @@
  */
 
 /**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
 function node_export_drush_command() {
   $items = array();
@@ -64,20 +64,20 @@ function node_export_drush_command() {
  * A function to help alias commands as other commands.
  */
 function node_export_drush_command_add_alias(&$items, $command, $alias) {
-   // Create a property on the command for adding aliases, if not there.
-   if (!isset($items[$command]['node_export command aliases'])) {
-      $items[$command]['node_export command aliases'] = array();
-   }
-   // Record the alias into that property.
-   $items[$command]['node_export command aliases'][] = $alias;
-   // Create the alias as a new command.
-   $items[$alias] = $items[$command];
-   // Indicate what this new command is an alias for.
-   $items[$alias]['node_export alias for'] = $command;
+  // Create a property on the command for adding aliases, if not there.
+  if (!isset($items[$command]['node_export command aliases'])) {
+    $items[$command]['node_export command aliases'] = array();
+  }
+  // Record the alias into that property.
+  $items[$command]['node_export command aliases'][] = $alias;
+  // Create the alias as a new command.
+  $items[$alias] = $items[$command];
+  // Indicate what this new command is an alias for.
+  $items[$alias]['node_export alias for'] = $command;
 }
 
 /**
- * Implementation of hook_drush_help().
+ * Implements hook_drush_help().
  *
  * This function is called whenever a drush user calls
  * 'drush help <name-of-your-command>'
@@ -92,40 +92,40 @@ function node_export_drush_help($section) {
   // This is to prevent duplication of information from hook_drush_command().
   $commands = node_export_drush_command();
   foreach ($commands as $command => $command_info) {
-    if ($section == 'drush:'. $command) {
+    if ($section == 'drush:' . $command) {
       $out = $command_info['description'];
       if (isset($command_info['node_export alias for'])) {
         $output .= "\nThis command is an alias for ";
-        $output .= $command_info['node_export alias for'] .".";
+        $output .= $command_info['node_export alias for'] . ".";
       }
       if (isset($command_info['node_export command aliases'])) {
         if (count($command_info['node_export command aliases']) == 1) {
           $output .= "\nThis command can be called by it's alias; ";
-          $output .= $command_info['node_export command aliases'] .".";
+          $output .= $command_info['node_export command aliases'] . ".";
         }
         else {
           $last_alias = array_pop($command_info['node_export command aliases']);
           $output .= "\nThis command can be called by it's aliases; ";
           $output .= implode(", ", $command_info['node_export command aliases']);
-          $output .= ", or ". $last_alias .".";
+          $output .= ", or " . $last_alias . ".";
         }
       }
       $out .= "\n\nArguments:";
       if (isset($command_info['arguments'])) {
         foreach ($command_info['arguments'] as $k => $v) {
-          $out .= "\n  ". $k ." : ". $v;
+          $out .= "\n  " . $k . " : " . $v;
         }
       }
       $out .= "\n\nOptions:";
       if (isset($command_info['options'])) {
         foreach ($command_info['options'] as $k => $v) {
-          $out .= "\n  ". $k ." : ". $v;
+          $out .= "\n  " . $k . " : " . $v;
         }
       }
       $out .= "\n\nExamples:";
       if (isset($command_info['examples'])) {
         foreach ($command_info['examples'] as $k => $v) {
-          $out .= "\n  \'". $k ."\' : ". $v;
+          $out .= "\n  \'" . $k . "\' : " . $v;
         }
       }
       return dt($out);
@@ -151,31 +151,29 @@ function node_export_drush_callback_export() {
 
   // Filter for values in the node table (except for nids).
   $filters = array(
-    'status' => "%d",
-    'promote' => "%d",
-    'sticky' => "%d",
-    'translate' => "%d",
-    'language' => "'%s'",
-    'type' => "'%s'",
+    'status'
+    'promote'
+    'sticky'
+    'translate'
+    'language'
+    'type'
   );
   $wheres = array();
   $args = array();
-  foreach ($filters as $filter => $filter_type) {
+  foreach ($filters as $filter) {
     $filter_option = drush_get_option($filter);
     if ($filter_option) {
       $filter_option_values = explode(",", $filter_option);
       $filter_option_placeholders = array();
-      foreach ($filter_option_values as $v) {
-        $filter_option_placeholders[] = $filter_type;
-      }
-      $wheres[] = $filter ." IN (". implode(", ", $filter_option_placeholders) .")";
+
+      $wheres[] = $filter . " IN (:" . $filter . ")";
       $args = $args + $filter_option_values;
     }
   }
   if (!empty($wheres)) {
-    $query = "SELECT nid FROM {node} WHERE (". implode(") AND (", $wheres) .")";
+    $query = "SELECT nid FROM {node} WHERE (" . implode(") AND (", $wheres) . ")";
     $result = db_query($query, $args);
-    while ($row = db_fetch_array($result)) {
+    foreach ($result as $row) {
       $nid_filters['filters'][] = $row['nid'];
     }
   }
@@ -184,7 +182,7 @@ function node_export_drush_callback_export() {
   $sql = drush_get_option('sql');
   if ($sql) {
     $result = db_query($sql);
-    while ($row = db_fetch_array($result)) {
+    foreach ($result as $row) {
       $nid_filters['sql'][] = $row['nid'];
     }
   }
@@ -192,23 +190,28 @@ function node_export_drush_callback_export() {
   // Handle PHP option.
   $php = drush_get_option('php');
   if ($php) {
-    $result = drupal_eval("<?php " . $php . " ?>");
-    if (is_array($result)) {
-      $nid_filters['php'] = $result;
+    if (module_exists('php')) {
+      $result = php_eval("<?php " . $php . " ?>");
+      if (is_array($result)) {
+        $nid_filters['php'] = $result;
+      }
+      else {
+        $nid_filters['php'] = explode(
+          ",",
+          str_replace(array("\n", "\r", "\t", " "), '', $result)
+        );
+      }
     }
     else {
-       $nid_filters['php'] = explode(
-         ",",
-         str_replace(array("\n", "\r", "\t", " "), '', $result)
-       );
+      drush_set_error('DRUSH_NOT_COMPLETED', "PHP module not enabled.");
     }
   }
 
   if (count($nid_filters) > 1) {
-     // Compute the intersect of all $nid_filters if there are more than one.
+    // Compute the intersect of all $nid_filters if there are more than one.
     $nids = call_user_func_array('array_intersect', $nid_filters);
   }
-  else if (count($nid_filters) == 1) {
+  elseif (count($nid_filters) == 1) {
     // Use the only filter if there is only one.
     $nids = reset($nid_filters);
   }
@@ -264,7 +267,7 @@ function node_export_drush_callback_export() {
  * Import nodes from data.
  */
 function node_export_drush_callback_import() {
-  // Switch to admin or the specified user so imported nodes are not anonymous.
+  // Switch to site maintenance account or the specified user so imported nodes are not anonymous.
   $uid = drush_get_option('uid');
   // Test on NULL so uid may be given as 0.
   if (is_null($uid)) {

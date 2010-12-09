@@ -7,9 +7,22 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function node_export_file_install() {
   // Weight the module light to ensure it runs before all CCK modules
-  db_query("UPDATE {system} SET weight = -10 WHERE name = 'node_export_file'");
+  db_update('system')
+    ->fields(array('weight' => -10))
+    ->condition('name', 'node_export_file')
+    ->execute();
 }
+
+
+/*
+
+  To do:
+
+  Specifically why is this module weighting required, and can it be replaced with:
+    hook_module_implements_alter() ?
+
+ */

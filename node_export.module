@@ -9,31 +9,42 @@
  */
 
 /**
- * Implementation of hook_help().
+ * Implements hook_help().
  */
 function node_export_help($path, $arg) {
   switch ($path) {
     case 'admin/help#node_export':
-      $output = '<p>'. t('The Node export module allows users to export an existing node and then import it into another Drupal installation.') .'</p>';
-      $output .= '<p>'. t('Users with the "export nodes" permission can utilize this functionality. A new tab will appear on node pages with the word "Export".') .'</p>';
-      $output .= '<p>'. t('It is also possible to do bulk exports, via Content admin (admin/content/node) or using "Views Bulk Operations".') .'</p>';
-      $output .= '<p>'. t('Importing nodes is done via the "Node export: import" page (admin/content/import) and can be done by those with the "use PHP to import nodes" permission.') .'</p>';
+      $output = '<p>' . t('The Node export module allows users to export an existing node and then import it into another Drupal installation.') . '</p>';
+      $output .= '<p>' . t('Users with the "export nodes" permission can utilize this functionality. A new tab will appear on node pages with the word "Export".') . '</p>';
+      $output .= '<p>' . t('It is also possible to do bulk exports, via Content admin (admin/content/node) or using "Views Bulk Operations".') . '</p>';
+      $output .= '<p>' . t('Importing nodes is done via the "Node export: import" page (admin/content/import) and can be done by those with the "use PHP to import nodes" permission.') . '</p>';
       return $output;
   }
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
-function node_export_perm() {
-  return array('export nodes', 'export own nodes', 'use PHP to import nodes');
+function node_export_permission() {
+  return array(
+    'export nodes' => array(
+      'title' => t('Export nodes'),
+    ),
+    'export own nodes' => array(
+      'title' => t('Export own nodes'),
+    ),
+    'use PHP to import nodes' => array(
+      'title' => t('Use PHP to import nodes'),
+      'description' => t('Required for importing, but can allow execution of PHP.'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function node_export_menu() {
-  $items['admin/settings/node_export'] = array(
+  $items['admin/config/content/node_export'] = array(
     'access arguments' => array('administer site configuration'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('node_export_settings'),
@@ -46,7 +57,7 @@ function node_export_menu() {
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
       if ($selected_formats[$format_handler]) {
-        $items['node/%node/node_export/'. $format_handler] = array(
+        $items['node/%node/node_export/' . $format_handler] = array(
           'access callback' => 'node_export_access',
           'access arguments' => array(1),
           'page callback' => 'node_export_gui',
@@ -104,6 +115,10 @@ function node_export_menu() {
 
 /**
  * Check access to export a node.
+ *
+ * @todo
+ *  Check if the user has permission to use the filter formats in all the
+ *  fields of the node.  Don't know how to do this.
  */
 function node_export_access($node) {
   global $user;
@@ -115,7 +130,7 @@ function node_export_access($node) {
   // Make sure the user can view the original node content.
   $access = $access && node_access('view', $node);
   // Check additional conditions
-  $access = $access && (node_export_is_permitted($node->type) && filter_access($node->format) && node_access('create', $node->type));
+  $access = $access && (node_export_is_permitted($node->type) && node_access('create', $node->type));
   // Let other modules alter this - for exmple to only allow some users
   // to export specific nodes or types.
   drupal_alter("node_export_access", $access, $node);
@@ -147,37 +162,36 @@ function node_export_is_permitted($type) {
 }
 
 /**
- * Implementation of hook_node_type().
+ * Implements hook_node_type_update().
  */
-function node_export_node_type($op, $type_obj) {
-
-  switch ($op) {
-    case 'delete':
-      variable_del('node_export_reset_'. $type_obj->type);
-      break;
-    case 'update':
-      if (!empty($type_obj->old_type) && $type_obj->old_type != $type_obj->type) {
-        if (variable_get('node_export_reset_'. $type_obj->old_type, FALSE)) {
-          variable_del('node_export_reset_'. $type_obj->old_type);
-          variable_set('node_export_reset_'. $type_obj->type, TRUE);
-        }
-      }
-      break;
+function node_export_node_type_update($info) {
+  if (!empty($info->old_type) && $info->old_type != $info->type) {
+    if (variable_get('node_export_reset_' . $info->old_type, FALSE)) {
+      variable_del('node_export_reset_' . $info->old_type);
+      variable_set('node_export_reset_' . $info->type, TRUE);
+    }
   }
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_node_type_delete().
+ */
+function node_export_node_type_delete($info) {
+  variable_del('node_export_reset_' . $info->type);
+}
+
+/**
+ * Implements hook_views_api().
  */
 function node_export_views_api() {
   return array(
     'api' => 2,
-    'path' => drupal_get_path('module', 'node_export') .'/views',
+    'path' => drupal_get_path('module', 'node_export') . '/views',
   );
 }
 
 /**
- * Implementation of hook_node_operations().
+ * Implements hook_node_operations().
  */
 function node_export_node_operations() {
   $operations = array();
@@ -190,8 +204,8 @@ function node_export_node_operations() {
       $format_handlers = node_export_format_handlers();
       foreach ($format_handlers as $format_handler => $format) {
         if ($selected_formats[$format_handler]) {
-          $operations['node_export_'. $format_handler] = array(
-            'label' => t('Node export') ." (". $format['#title'] .")",
+          $operations['node_export_' . $format_handler] = array(
+            'label' => t('Node export') . " (" . $format['#title'] . ")",
             'callback' => 'node_export_gui',
             'callback arguments' => array($format_handler),
           );
@@ -250,7 +264,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
       );
     }
 
-    $node = drupal_clone($original_node);
+    $node = clone($original_node);
 
     // Fix taxonomy array
     if (isset($node->taxonomy) && count($node->taxonomy)) {
@@ -280,13 +294,13 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     $node = node_export_remove_recursion($node);
 
     // Let other modules do special fixing up.
-    drupal_alter('node_export_node', $node, $original_node, 'export');
+    drupal_alter('node_export_node', $node, $original_node);
 
     $nodes[] = $node;
   }
 
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $nodes, 'export', $format);
+  drupal_alter('node_export', $nodes, $format);
 
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
@@ -320,7 +334,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 function node_export_import_types_check($nodes) {
   $missing_types = array();
   foreach ($nodes as $node) {
-    if (node_get_types('name', $node) == FALSE) {
+    if (node_type_get_name($node) == FALSE) {
       $missing_types[$node->type] = $node->type;
     }
   }
@@ -349,15 +363,15 @@ function node_export_import($code_string, $msg_t = 't') {
   $nodes = array();
   $used_format = "";
   foreach ($format_handlers as $format_handler => $format) {
-     $nodes = module_invoke(
-       $format_handlers[$format_handler]['#module'],
-       'node_export_import',
-       $code_string
-     );
-     if (!empty($nodes)) {
-       $used_format = $format_handler;
-       break;
-     }
+    $nodes = module_invoke(
+      $format_handlers[$format_handler]['#module'],
+      'node_export_import',
+      $code_string
+    );
+    if (!empty($nodes)) {
+      $used_format = $format_handler;
+      break;
+    }
   }
 
   if (isset($nodes['success']) && !$nodes['success']) {
@@ -411,7 +425,7 @@ function node_export_import($code_string, $msg_t = 't') {
   $count = 0;
   $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $nodes, 'import', $used_format);
+  drupal_alter('node_export_import', $nodes, $used_format);
   $new_nodes = array();
   $new_nid = 0;
   $messages = array();
@@ -419,14 +433,14 @@ function node_export_import($code_string, $msg_t = 't') {
     $node = node_export_node_clone($original_node);
 
     // Let other modules do special fixing up.
-    drupal_alter('node_export_node', $node, $original_node, 'import');
+    drupal_alter('node_export_node_import', $node, $original_node);
 
     node_export_save($node);
     $new_nodes[] = $node;
-    $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/'. $node->nid)));
+    $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/' . $node->nid)));
     $count++;
   }
-  drupal_alter('node_export', $new_nodes, 'after import', $used_format);
+  drupal_alter('node_export_after_import', $new_nodes, $used_format);
   $messages[] = $msg_t("!count of !total nodes were imported.  Some values may have been reset depending on Node export's configuration.", array('!total' => $total, '!count' => $count));
 
   // Clear the page and block caches.
@@ -443,88 +457,137 @@ function node_export_import($code_string, $msg_t = 't') {
 /**
  * Save a node object into the database.
  *
+ * $node->changed is not forced like in node_save().
+ *
  * A modified version of node_save().
  */
 function node_export_save(&$node) {
-  // Let modules modify the node before it is saved to the database.
-  node_invoke_nodeapi($node, 'presave');
-  global $user;
+  $transaction = db_transaction();
 
-  $node->is_new = FALSE;
-
-  // Apply filters to some default node fields:
-  if (empty($node->nid)) {
-    // Insert a new node.
-    $node->is_new = TRUE;
-
-    // When inserting a node, $node->log must be set because
-    // {node_revisions}.log does not (and cannot) have a default
-    // value.  If the user does not have permission to create
-    // revisions, however, the form will not contain an element for
-    // log so $node->log will be unset at this point.
-    if (!isset($node->log)) {
-      $node->log = '';
+  try {
+    // Load the stored entity, if any.
+    if (!empty($node->nid) && !isset($node->original)) {
+      $node->original = entity_load_unchanged('node', $node->nid);
     }
 
-    // For the same reasons, make sure we have $node->teaser and
-    // $node->body.  We should consider making these fields nullable
-    // in a future version since node types are not required to use them.
-    if (!isset($node->teaser)) {
-      $node->teaser = '';
+    field_attach_presave('node', $node);
+    global $user;
+
+    // Determine if we will be inserting a new node.
+    if (!isset($node->is_new)) {
+      $node->is_new = empty($node->nid);
     }
-    if (!isset($node->body)) {
-      $node->body = '';
+
+    // Set the timestamp fields.
+    if (empty($node->created)) {
+      $node->created = REQUEST_TIME;
     }
-  }
-  elseif (!empty($node->revision)) {
-    $node->old_vid = $node->vid;
-  }
-  else {
-    // When updating a node, avoid clobberring an existing log entry with an empty one.
-    if (empty($node->log)) {
+
+    // The update of the changed value is forced in the original node_save().
+    if (empty($node->changed)) {
+      $node->changed = REQUEST_TIME;
+    }
+
+    $node->timestamp = REQUEST_TIME;
+    $update_node = TRUE;
+
+    // Let modules modify the node before it is saved to the database.
+    module_invoke_all('node_presave', $node);
+
+    if ($node->is_new || !empty($node->revision)) {
+      // When inserting either a new node or a new node revision, $node->log
+      // must be set because {node_revision}.log is a text column and therefore
+      // cannot have a default value. However, it might not be set at this
+      // point (for example, if the user submitting a node form does not have
+      // permission to create revisions), so we ensure that it is at least an
+      // empty string in that case.
+      // @todo: Make the {node_revision}.log column nullable so that we can
+      // remove this check.
+      if (!isset($node->log)) {
+        $node->log = '';
+      }
+    }
+    elseif (empty($node->log)) {
+      // If we are updating an existing node without adding a new revision, we
+      // need to make sure $node->log is unset whenever it is empty. As long as
+      // $node->log is unset, drupal_write_record() will not attempt to update
+      // the existing database column when re-saving the revision; therefore,
+      // this code allows us to avoid clobbering an existing log entry with an
+      // empty one.
       unset($node->log);
     }
-  }
 
-  // Set some required fields:
-  if (empty($node->created)) {
-    $node->created = time();
-  }
+    // When saving a new node revision, unset any existing $node->vid so as to
+    // ensure that a new revision will actually be created, then store the old
+    // revision ID in a separate property for use by node hook implementations.
+    if (!$node->is_new && !empty($node->revision) && $node->vid) {
+      $node->old_vid = $node->vid;
+      unset($node->vid);
+    }
 
-  // The update of the changed value is forced in the original node_export().
-  if (empty($node->changed)) {
-    $node->changed = time();
-  }
-
-  $node->timestamp = time();
-  $node->format = isset($node->format) ? $node->format : FILTER_FORMAT_DEFAULT;
-
-  // Generate the node table query and the node_revisions table query.
-  if ($node->is_new) {
-    _node_save_revision($node, $user->uid);
-    drupal_write_record('node', $node);
-    db_query('UPDATE {node_revisions} SET nid = %d WHERE vid = %d', $node->nid, $node->vid);
-    $op = 'insert';
-  }
-  else {
-    drupal_write_record('node', $node, 'nid');
-    if (!empty($node->revision)) {
+    // Save the node and node revision.
+    if ($node->is_new) {
+      // For new nodes, save new records for both the node itself and the node
+      // revision.
+      drupal_write_record('node', $node);
       _node_save_revision($node, $user->uid);
-      db_query('UPDATE {node} SET vid = %d WHERE nid = %d', $node->vid, $node->nid);
+      $op = 'insert';
     }
     else {
-      _node_save_revision($node, $user->uid, 'vid');
+      // For existing nodes, update the node record which matches the value of
+      // $node->nid.
+      drupal_write_record('node', $node, 'nid');
+      // Then, if a new node revision was requested, save a new record for
+      // that; otherwise, update the node revision record which matches the
+      // value of $node->vid.
+      if (!empty($node->revision)) {
+        _node_save_revision($node, $user->uid);
+      }
+      else {
+        _node_save_revision($node, $user->uid, 'vid');
+        $update_node = FALSE;
+      }
+      $op = 'update';
     }
-    $op = 'update';
+    if ($update_node) {
+      db_update('node')
+        ->fields(array('vid' => $node->vid))
+        ->condition('nid', $node->nid)
+        ->execute();
+    }
+
+    // Call the node specific callback (if any). This can be
+    // node_invoke($node, 'insert') or
+    // node_invoke($node, 'update').
+    node_invoke($node, $op);
+
+    // Save fields.
+    $function = "field_attach_$op";
+    $function('node', $node);
+
+    module_invoke_all('node_' . $op, $node);
+    module_invoke_all('entity_' . $op, $node, 'node');
+
+    // Update the node access table for this node. There's no need to delete
+    // existing records if the node is new.
+    $delete = $op == 'update';
+    node_access_acquire_grants($node, $delete);
+
+    // Clear internal properties.
+    unset($node->is_new);
+    unset($node->original);
+    // Clear the static loading cache.
+    entity_get_controller('node')->resetCache(array($node->nid));
+
+    // Ignore slave server temporarily to give time for the
+    // saved node to be propagated to the slave.
+    db_ignore_slave();
   }
-
-  // Call the node specific callback (if any).
-  node_invoke($node, $op);
-  node_invoke_nodeapi($node, $op);
-
-  // Update the node access table for this node.
-  node_access_acquire_grants($node);
-
+  catch (Exception $e) {
+    $transaction->rollback();
+    watchdog_exception('node', $e);
+    throw $e;
+  }
 }
 
 /**
@@ -533,26 +596,26 @@ function node_export_save(&$node) {
 function node_export_node_clone($original_node) {
     global $user;
 
-    $node = drupal_clone($original_node);
+    $node = clone($original_node);
 
     $node->nid = NULL;
     $node->vid = NULL;
     $node->name = $user->name;
     $node->uid = $user->uid;
 
-    if (variable_get('node_export_reset_created_'. $node->type, TRUE)) {
+    if (variable_get('node_export_reset_created_' . $node->type, TRUE)) {
       $node->created = NULL;
     }
 
-    if (variable_get('node_export_reset_changed_'. $node->type, TRUE)) {
+    if (variable_get('node_export_reset_changed_' . $node->type, TRUE)) {
       $node->changed = NULL;
     }
 
-    if (variable_get('node_export_reset_menu_'. $node->type, TRUE)) {
+    if (variable_get('node_export_reset_menu_' . $node->type, TRUE)) {
       $node->menu = NULL;
     }
 
-    if (variable_get('node_export_reset_path_'. $node->type, TRUE)) {
+    if (variable_get('node_export_reset_path_' . $node->type, TRUE)) {
       $node->path = NULL;
     }
     elseif (module_exists('pathauto')) {
@@ -560,14 +623,14 @@ function node_export_node_clone($original_node) {
       $node->pathauto_perform_alias = FALSE;
     }
 
-    if (variable_get('node_export_reset_book_mlid_'. $node->type, TRUE) && isset($node->book['mlid'])) {
+    if (variable_get('node_export_reset_book_mlid_' . $node->type, TRUE) && isset($node->book['mlid'])) {
       $node->book['mlid'] = NULL;
     }
 
     $node->files = array();
 
-    if (variable_get('node_export_reset_'. $node->type, FALSE)) {
-      $node_options = variable_get('node_options_'. $node->type, array('status', 'promote'));
+    if (variable_get('node_export_reset_' . $node->type, FALSE)) {
+      $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
       // Fill in the default values.
       foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
         $node->$key = in_array($key, $node_options);
@@ -584,7 +647,8 @@ function node_export_node_clone($original_node) {
  */
 function node_export_get_menu($node) {
   // This will fetch the existing menu item if the node had one.
-  node_invoke_nodeapi($node, 'prepare');
+  module_invoke_all('node_prepare', $node);
+  $type = $node->type;
 
   // Only keep the values we care about.
   if (!empty($node->menu)) {
@@ -593,8 +657,11 @@ function node_export_get_menu($node) {
     $old_menu = $node->menu;
 
     // Now fetch the defaults for a new menu entry.
-    $node = NULL;
-    node_invoke_nodeapi($node, 'prepare');
+    $node = new stdClass;
+    $node->type = $type;
+    //module_invoke_all('node_prepare', $node);
+
+    node_object_prepare($node);
 
     // Make a list of values to attempt to copy.
     $menu_fields = array(
@@ -617,50 +684,50 @@ function node_export_get_menu($node) {
  * Remove recursion problem from an object or array.
  */
 function node_export_remove_recursion($o) {
-   static  $replace;
-   if (!isset($replace)) {
-   $replace = create_function(
-         '$m',
-         '$r="\x00{$m[1]}ecursion_export_node_";return \'s:\'.strlen($r.$m[2]).\':"\'.$r.$m[2].\'";\';'
-      );
-   }
-   if (is_array($o) || is_object($o)) {
-      $re = '#(r|R):([0-9]+);#';
-      $serialize = serialize($o);
-      if (preg_match($re, $serialize)) {
-         $last = $pos = 0;
-         while (false !== ($pos = strpos($serialize, 's:', $pos))) {
-            $chunk = substr($serialize, $last, $pos - $last);
-            if (preg_match($re, $chunk)) {
-               $length = strlen($chunk);
-               $chunk = preg_replace_callback($re, $replace, $chunk);
-               $serialize = substr($serialize, 0, $last) . $chunk . substr($serialize, $last + ($pos - $last));
-               $pos += strlen($chunk) - $length;
-            }
-            $pos += 2;
-            $last = strpos($serialize, ':', $pos);
-            $length = substr($serialize, $pos, $last - $pos);
-            $last += 4 + $length;
-            $pos = $last;
-         }
-         $serialize = substr($serialize, 0, $last) . preg_replace_callback($re, $replace, substr($serialize, $last));
-         $o = unserialize($serialize);
+  static $replace;
+  if (!isset($replace)) {
+    $replace = create_function(
+      '$m',
+      '$r="\x00{$m[1]}ecursion_export_node_";return \'s:\'.strlen($r.$m[2]).\':"\'.$r.$m[2].\'";\';'
+    );
+  }
+  if (is_array($o) || is_object($o)) {
+    $re = '#(r|R):([0-9]+);#';
+    $serialize = serialize($o);
+    if (preg_match($re, $serialize)) {
+      $last = $pos = 0;
+      while (false !== ($pos = strpos($serialize, 's:', $pos))) {
+        $chunk = substr($serialize, $last, $pos - $last);
+        if (preg_match($re, $chunk)) {
+          $length = strlen($chunk);
+          $chunk = preg_replace_callback($re, $replace, $chunk);
+          $serialize = substr($serialize, 0, $last) . $chunk . substr($serialize, $last + ($pos - $last));
+          $pos += strlen($chunk) - $length;
+        }
+        $pos += 2;
+        $last = strpos($serialize, ':', $pos);
+        $length = substr($serialize, $pos, $last - $pos);
+        $last += 4 + $length;
+        $pos = $last;
       }
-   }
-   return $o;
+      $serialize = substr($serialize, 0, $last) . preg_replace_callback($re, $replace, substr($serialize, $last));
+      $o = unserialize($serialize);
+    }
+  }
+  return $o;
 }
 
 /**
  * Restore recursion to an object or array.
  */
 function node_export_restore_recursion($o) {
-    return unserialize(
-        preg_replace(
-            '#s:[0-9]+:"\x00(r|R)ecursion_export_node_([0-9]+)";#',
-            '\1:\2;',
-            serialize($o)
-        )
-    );
+  return unserialize(
+    preg_replace(
+      '#s:[0-9]+:"\x00(r|R)ecursion_export_node_([0-9]+)";#',
+      '\1:\2;',
+      serialize($o)
+    )
+  );
 }
 
 /**
@@ -671,7 +738,7 @@ function node_export_restore_recursion($o) {
  * @see hook_node_export_format_handlers()
  */
 function node_export_format_handlers() {
-  static $format_handlers;
+  $format_handlers = &drupal_static(__FUNCTION__);
 
   // Get default format handler.
   module_load_include('inc', 'node_export', 'node_export.node_code');

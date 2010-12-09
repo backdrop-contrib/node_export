@@ -1,5 +1,6 @@
 ; $Id$
 name = Node export
 description = "Allows users to export a node and the import into another Drupal installation."
-core = 6.x
+core = 7.x
 package = "Node export"
+configure = admin/config/content/node_export
