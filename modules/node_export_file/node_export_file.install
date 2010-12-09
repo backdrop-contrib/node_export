@@ -8,6 +8,10 @@
 
 /**
  * Implements hook_install().
+ *
+ * @todo
+ *  Why is this weighting required, and how can we replace it with 
+ *  hook_module_implements_alter() ?
  */
 function node_export_file_install() {
   // Weight the module light to ensure it runs before all CCK modules
@@ -17,12 +21,11 @@ function node_export_file_install() {
     ->execute();
 }
 
-
-/*
-
-  To do:
-
-  Specifically why is this module weighting required, and can it be replaced with:
-    hook_module_implements_alter() ?
-
+/**
+ * Implementation of hook_uninstall().
  */
+function node_export_file_uninstall() {
+  variable_del('node_export_file_types');
+  variable_del('node_export_file_mode');
+  variable_del('node_export_file_assets_path');
+}

@@ -28,7 +28,7 @@ function node_export_drush_command() {
       '--language' => "Filter for 'language'; The language code (e.g. de or en-US) of this node.",
       '--type' => "Filter for 'type'; The machine-readable name (e.g. story or page) of the type of this node.",
       '--sql' => "Filter by SQL (EXPERIMENTAL); An SQL query string that returns nids (e.g. \"SELECT nid FROM nodes WHERE nid < 10\").",
-      '--php' => "Filter by PHP (EXPERIMENTAL); PHP that prints or returns, an array or CSV string of nids (e.g. \"custom_get_my_nids();\"). Don't include PHP tags.",
+      '--code' => "Filter by PHP code (EXPERIMENTAL); PHP code that prints or returns, an array or CSV string of nids (e.g. \"custom_get_my_nids();\"). Don't include PHP tags.",
     ),
     'examples' => array(
       'drush node-export-export 45 46 47 --file=filename' =>
@@ -188,22 +188,20 @@ function node_export_drush_callback_export() {
   }
 
   // Handle PHP option.
-  $php = drush_get_option('php');
-  if ($php) {
-    if (module_exists('php')) {
-      $result = php_eval("<?php " . $php . " ?>");
-      if (is_array($result)) {
-        $nid_filters['php'] = $result;
-      }
-      else {
-        $nid_filters['php'] = explode(
-          ",",
-          str_replace(array("\n", "\r", "\t", " "), '', $result)
-        );
-      }
+  $code = drush_get_option('code');
+  if ($code) {
+    ob_start();
+    print eval("?><?php " . $code . " ?>");
+    $result = ob_get_contents();
+    ob_end_clean();
+    if (is_array($result)) {
+      $nid_filters['code'] = $result;
     }
     else {
-      drush_set_error('DRUSH_NOT_COMPLETED', "PHP module not enabled.");
+      $nid_filters['code'] = explode(
+        ",",
+        str_replace(array("\n", "\r", "\t", " "), '', $result)
+      );
     }
   }
 
