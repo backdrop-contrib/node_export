@@ -26,11 +26,11 @@ class views_handler_field_node_link_export extends views_handler_field_node_link
     $node->uid = $values->{$this->aliases['uid']};
     $node->type = $values->{$this->aliases['type']};
     $node->format = $values->{$this->aliases['format']};
-    if (!node_export_access($node)) {
+    if (!node_export_access_check($node)) {
       return;
     }
 
-    $text = !empty($this->options['text']) ? $this->options['text'] : t('export');
-    return l($text, "node/$node->nid/export", array('query' => drupal_get_destination()));
+    $text = !empty($this->options['text']) ? $this->options['text'] : t('Node export');
+    return l($text, "node/$node->nid/node_export", array('query' => drupal_get_destination()));
   }
 }
