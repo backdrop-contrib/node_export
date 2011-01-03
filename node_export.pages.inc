@@ -16,9 +16,9 @@ define("NODE_EXPORT", "node-export");
  */
 function node_export_token_values($type, $object = NULL, $options = array()) {
   if ($type == 'Node export filename') {
-    $tokens['nid-list']      = $object['list'];
-    $tokens['node-count']    = $object['count'];
-    $tokens['timestamp']     = $object['time'];
+    $tokens['nid-list']      = $object['nid-list'];
+    $tokens['node-count']    = $object['node-count'];
+    $tokens['timestamp']     = $object['timestamp'];
     return $tokens;
   }
 }
@@ -50,7 +50,8 @@ function node_export_settings_token_bits(&$form, $key, $group = 'basic') {
       '#collapsed' => TRUE,
     );
     $form[$group][$key . '_token_help']['help'] = array(
-      '#markup' => theme('token_help', 'Node export filename'),
+      '#theme' => 'token_tree',
+      '#token_types' => array('Node export filename'),
     );
   }
   else {
@@ -111,6 +112,7 @@ function node_export_settings() {
     '#size' => 120,
   );
   node_export_settings_token_bits($form, 'node_export_filename');
+
   $form['basic']['node_export_file_list'] = array(
     '#type' => 'textfield',
     '#title' => t('Nid list limit max'),
@@ -323,22 +325,23 @@ function node_export_form_submit($form, &$form_state) {
  */
 function node_export_get_file($nids, $code_string) {
   $filename_data = array();
-  $filename_data['count'] = count($nids);
-  $filename_data['time'] = REQUEST_TIME;
+  $filename_data['node-count'] = count($nids);
+  $filename_data['timestamp'] = REQUEST_TIME;
 
   // Add a list of nids
   if (count($nids) <= variable_get('node_export_file_list', 10)) {
-    $filename_data['list'] = '[' . implode(',', $nids) . ']';
+    $filename_data['nid-list'] = '[' . implode(',', $nids) . ']';
   }
   $name = variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export');
   if (module_exists('token')) {
-    $name = token_replace($name, 'Node export filename', $filename_data, '[', ']');
+    $data = array('Node export filename' => (object)$filename_data);
+    $name = token_replace($name, $data);
   }
   else {
     // So it works without token.
-    $name = str_replace('[nid-list]', $filename_data['list'], $name);
-    $name = str_replace('[node-count]', $filename_data['count'], $name);
-    $name = str_replace('[timestamp]', $filename_data['time'], $name);
+    $name = str_replace('[nid-list]', $filename_data['nid-list'], $name);
+    $name = str_replace('[node-count]', $filename_data['node-count'], $name);
+    $name = str_replace('[timestamp]', $filename_data['timestamp'], $name);
   }
   header('Content-type: text/plain');
   header('Content-Disposition: attachment; filename="' . $name . '"');
