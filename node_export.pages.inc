@@ -97,8 +97,12 @@ function node_export_settings() {
   $form['basic']['node_export_code'] = array(
     '#type' => 'radios',
     '#title' => t('Node export code delivery'),
-    '#options' => array('copy' => t('Textarea filled with export code'), 'file' => t('Text file download')),
-    '#default_value' => variable_get('node_export_code', 'copy'),
+    '#options' => array(
+      'all' => t('All of the below options on a page'),
+      'copy' => t('Textarea filled with export code'),
+      'file' => t('Text file download'),
+    ),
+    '#default_value' => variable_get('node_export_code', 'all'),
   );
   $form['basic']['node_export_filename'] = array(
     '#type' => 'textfield',
@@ -178,8 +182,10 @@ function node_export_settings() {
  *    A node, an array of nodes, or an array of nids.
  *  @param $format
  *    The node export format.
+ *  @param $delivery
+ *    The code delivery format, if NULL will use settings.
  */
-function node_export_gui($nodes = NULL, $format = NULL) {
+function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
 
   // Get the $code_string.
   if ($nodes) {
@@ -194,59 +200,88 @@ function node_export_gui($nodes = NULL, $format = NULL) {
       }
       return;
     }
-
+    $nids = node_export_nodes_to_nids($nodes);
   }
   elseif (!empty($_SESSION['node_export'])) {
-    // $code_string supplied from session.
-    $code_string = array_shift($_SESSION['node_export']);
+    // Nids and code string supplied from session.
+    $session_data = array_shift($_SESSION['node_export']);
+    $code_string = $session_data['code_string'];
+    $nids = $session_data['nids'];
   }
 
-  if (variable_get('node_export_code', 'copy') == 'copy') {
+  $delivery = $delivery ? $delivery : variable_get('node_export_code', 'all');
+  if ($delivery != 'file') {
     if (is_object($nodes)) {
       // Single node, output straight away.
       drupal_set_title(t('Node export of !title', array('!title' => check_plain($nodes->title))));
-      return drupal_get_form('node_export_form', $code_string);
+      return drupal_get_form('node_export_form', $nids, $code_string);
     }
     elseif ($nodes) {
       // Node operation, add to session and redirect.
-      $_SESSION['node_export'][] = $code_string;
+      $_SESSION['node_export'][] = array(
+        'code_string' => $code_string,
+        'nids' => $nids,
+      );
       drupal_goto('admin/content/node_export');
     }
     elseif (!$nodes) {
       // No $nodes passed, but $code_string came from session.
-      return drupal_get_form('node_export_form', $code_string);
+      return drupal_get_form('node_export_form', $nids, $code_string);
     }
   }
   else {
     // Get file.
-    if (is_object($nodes)) {
-      $nids = array($nodes->nid);
-    }
-    else {
-      $nids = array();
-      foreach ($nodes as $node) {
-        if (is_object($node)) {
-          $nids[] = $node->nid;
-        }
-        elseif (is_int($node)) {
-          $nids[] = $node;
-        }
-      }
-    }
     node_export_get_file($nids, $code_string);
   }
 }
 
 /**
- *  Export Form.
+ * Convert a node, nodes, or nids into an array of nids.
+ */
+function node_export_nodes_to_nids($nodes) {
+  if (is_object($nodes)) {
+    $nids = array($nodes->nid);
+  }
+  else {
+    $nids = array();
+    foreach ($nodes as $node) {
+      if (is_object($node)) {
+        $nids[] = $node->nid;
+      }
+      elseif (is_int($node)) {
+        $nids[] = $node;
+      }
+    }
+  }
+  return $nids;
+}
+
+/**
+ *  Export form.
  *
  *  @param $form_state
  *    The form state.
+ *  @param $nids
+ *    An array of node ids that are being exported.
  *  @param $code_string
  *    The Node export code.
  */
-function node_export_form($form_state, $code_string) {
+function node_export_form($form_state, $nids, $code_string) {
   $form = array();
+  if (variable_get('node_export_code', 'all') == 'all') {
+    $form['nids'] = array(
+      '#type' => 'value',
+      '#value' => $nids,
+    );
+    $form['code_string'] = array(
+      '#type' => 'value',
+      '#value' => $code_string,
+    );
+    $form['download_file'] = array(
+      '#type' => 'submit',
+      '#value' => t('Download file'),
+    );
+  }
   $form['export'] = array(
     '#type' => 'textarea',
     '#title' => t('Node export code'),
@@ -258,6 +293,18 @@ function node_export_form($form_state, $code_string) {
     ),
   );
   return $form;
+}
+
+/**
+ * Export form submit function.
+ *
+ * File download was requested.
+ */
+function node_export_form_submit($form, &$form_state) {
+  // Get file.
+  $nids = $form_state['values']['nids'];
+  $code_string = $form_state['values']['code_string'];
+  node_export_get_file($nids, $code_string);
 }
 
 /**

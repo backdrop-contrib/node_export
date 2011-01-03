@@ -480,7 +480,7 @@ function _node_export_file_import_file(&$file) {
   }
   // Unknown error
   else {
-    drupal_set_message(t("Unknown error occurred attempting to import file: {$file->filepath}"), 'error');
+    drupal_set_message(t("Unknown error occurred attempting to import file: @filepath", array('@filepath' => $file->filepath)), 'error');
     return FALSE;
   }
 

@@ -45,7 +45,7 @@ function node_export_menu() {
   if (count(array_filter($selected_formats)) > 1) {
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
-      if ($selected_formats[$format_handler]) {
+      if (in_array($format_handler, $selected_formats)) {
         $items['node/%node/node_export/'. $format_handler] = array(
           'access callback' => 'node_export_access_check',
           'access arguments' => array(1),
