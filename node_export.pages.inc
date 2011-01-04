@@ -12,30 +12,62 @@
 define("NODE_EXPORT", "node-export");
 
 /**
- * Implements hook_token_values().
+ * Implements hook_tokens().
  */
-function node_export_token_values($type, $object = NULL, $options = array()) {
-  if ($type == 'Node export filename') {
-    $tokens['nid-list']      = $object['nid-list'];
-    $tokens['node-count']    = $object['node-count'];
-    $tokens['timestamp']     = $object['timestamp'];
-    return $tokens;
+function node_export_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
+  if ($type == 'node_export_filename' && !empty($data['node_export_filename'])) {
+    $object = (array)$data['node_export_filename'];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        // Simple key values on the node.
+        case 'nid-list':
+          $replacements[$original] = $object['nid-list'];
+          break;
+
+        case 'node-count':
+          $replacements[$original] = $object['node-count'];
+          break;
+
+        case 'timestamp':
+          $replacements[$original] = $object['timestamp'];
+          break;
+      }
+    }
   }
+  return $replacements;
 }
 
 /**
- * Implements hook_token_list().
+ * Implements hook_token_info().
  */
-function node_export_token_list($type = 'all') {
-  if ($type == 'Node export filename') {
-    $tokens['Node export filename']['nid-list']
-      = t("Comma seperated list of node ids in square brackets (if available).");
-    $tokens['Node export filename']['node-count']
-      = t("The number of nodes exported.");
-    $tokens['Node export filename']['timestamp']
-      = t("The timestamp when the file was generated.");
-    return $tokens;
-  }
+function node_export_token_info() {
+  return array(
+    'types' => array(
+      'node_export_filename' => array(
+        'name' => t('Node export filename'),
+        'description' => t('Tokens related to the Node export filename.'),
+        'needs-data' => 'node_export_filename',
+      ),
+    ),
+    'tokens' => array(
+      'node_export_filename' => array(
+        'nid-list' => array(
+          'name' => t("Node ID list"),
+          'description' => t("Comma seperated list of Node IDs in square brackets (if available)."),
+        ),
+        'node-count' => array(
+          'name' => t("Node count"),
+          'description' => t("The number of nodes exported."),
+        ),
+        'timestamp' => array(
+          'name' => t("Timestamp"),
+          'description' => t("The timestamp when the file was generated."),
+        ),
+      ),
+    ),
+  );
 }
 
 /**
@@ -51,7 +83,7 @@ function node_export_settings_token_bits(&$form, $key, $group = 'basic') {
     );
     $form[$group][$key . '_token_help']['help'] = array(
       '#theme' => 'token_tree',
-      '#token_types' => array('Node export filename'),
+      '#token_types' => array('node_export_filename'),
     );
   }
   else {
@@ -108,7 +140,7 @@ function node_export_settings() {
   $form['basic']['node_export_filename'] = array(
     '#type' => 'textfield',
     '#title' => t('Filename pattern'),
-    '#default_value' => variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export'),
+    '#default_value' => variable_get('node_export_filename', 'node-export[node_export_filename:nid-list]([node_export_filename:node-count]-nodes).[node_export_filename:timestamp].export'),
     '#size' => 120,
   );
   node_export_settings_token_bits($form, 'node_export_filename');
@@ -332,17 +364,10 @@ function node_export_get_file($nids, $code_string) {
   if (count($nids) <= variable_get('node_export_file_list', 10)) {
     $filename_data['nid-list'] = '[' . implode(',', $nids) . ']';
   }
-  $name = variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export');
-  if (module_exists('token')) {
-    $data = array('Node export filename' => (object)$filename_data);
-    $name = token_replace($name, $data);
-  }
-  else {
-    // So it works without token.
-    $name = str_replace('[nid-list]', $filename_data['nid-list'], $name);
-    $name = str_replace('[node-count]', $filename_data['node-count'], $name);
-    $name = str_replace('[timestamp]', $filename_data['timestamp'], $name);
-  }
+  $name = variable_get('node_export_filename', 'node-export[node_export_filename:nid-list]([node_export_filename:node-count]-nodes).[node_export_filename:timestamp].export');
+  $data = array('node_export_filename' => (object)$filename_data);
+  $name = token_replace($name, $data);
+
   header('Content-type: text/plain');
   header('Content-Disposition: attachment; filename="' . $name . '"');
   print($code_string);
