@@ -400,7 +400,7 @@ function node_export_import($code_string, $msg_t = 't') {
   $count = 0;
   $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $import, 'import', $used_format);
+  drupal_alter('node_export', $nodes, 'import', $used_format);
   $new_nodes = array();
   $new_nid = 0;
   $messages = array();
