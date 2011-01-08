@@ -151,12 +151,12 @@ function node_export_drush_callback_export() {
 
   // Filter for values in the node table (except for nids).
   $filters = array(
-    'status'
-    'promote'
-    'sticky'
-    'translate'
-    'language'
-    'type'
+    'status',
+    'promote',
+    'sticky',
+    'translate',
+    'language',
+    'type',
   );
   $wheres = array();
   $args = array();
