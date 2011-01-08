@@ -100,14 +100,14 @@ function _filefield_field_filter($attribute, $field) {
  * Implements hook_node_export_node_alter().
  */
 function upload_node_export_node_alter(&$node, $original_node) {
-  _upload_node_export_node_alter(&$node, $original_node, 'export');
+  _upload_node_export_node_alter($node, $original_node, 'export');
 }
 
 /**
  * Implements hook_node_export_node_import_alter().
  */
 function upload_node_export_node_import_alter(&$node, $original_node) {
-  _upload_node_export_node_alter(&$node, $original_node, 'import');
+  _upload_node_export_node_alter($node, $original_node, 'import');
 }
 
 /**
