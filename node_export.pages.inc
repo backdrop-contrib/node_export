@@ -126,6 +126,13 @@ function node_export_settings() {
       '#description' => t("If you select multiple formats, they will all be available to the user.  If you select none, or the format handler is not found, it will use the default 'Node code'.  This does not affect imports, the required import format will be used automatically."),
     );
   }
+  else {
+    $format = key($format_options);
+    $form['basic']['node_export_format'] = array(
+      '#type' => 'value',
+      '#value' => array($format => $format),
+    );
+  }
 
   $form['basic']['node_export_code'] = array(
     '#type' => 'radios',

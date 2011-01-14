@@ -65,6 +65,7 @@ function node_export_menu() {
           'title' => 'Node export (' . $format['#title'] . ')',
           'weight' => 5,
           'type' => MENU_LOCAL_TASK,
+          'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
           'file' => 'node_export.pages.inc',
         );
       }
@@ -79,6 +80,7 @@ function node_export_menu() {
       'title' => 'Node export',
       'weight' => 5,
       'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
       'file' => 'node_export.pages.inc',
     );
   }
