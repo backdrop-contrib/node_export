@@ -8,9 +8,6 @@
  * Functions for page/form interfaces.
  */
 
-// Define the files subdirectory
-define("NODE_EXPORT", "node-export");
-
 /**
  * Implements hook_tokens().
  */
@@ -466,27 +463,21 @@ function node_export_import_form_validate($form, &$form_state) {
 function node_export_import_form_submit($form, &$form_state) {
   if ($_FILES['files']['name']['file']) {
     $original = $_FILES['files']['name']['file'];
-    $directory = 'public:/' . NODE_EXPORT;
-    if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-      $save = file_save_upload('file', array(), $directory, FILE_EXISTS_RENAME);
-      if (!$save) {
-        drupal_set_message(t('Error: Node export could not save file.'), 'error');
-      }
-      else {
-        $save->original = $original;
-        form_set_value($form['upload']['file'], serialize($save), $form_state);
-      }
+    $save = file_save_upload('file', array('file_validate_extensions' => array()));
+    if (!$save) {
+      drupal_set_message(t('Error: Node export could not save file.'), 'error');
     }
     else {
-      drupal_set_message(t('Error: Node export could not access files directory.'), 'error');
+      $save->original = $original;
+      form_set_value($form['upload']['file'], serialize($save), $form_state);
     }
   }
 
   if ($form_state['values']['file']) {
     $file = unserialize($form_state['values']['file']);
-    if (file_exists($file->filepath)) {
-      $code_string = file_get_contents($file->filepath);
-      unlink($file->filepath);
+    if (file_exists($file->uri)) {
+      $code_string = file_get_contents($file->uri);
+      unlink($file->uri);
     }
   }
   elseif ($form_state['values']['code']) {
