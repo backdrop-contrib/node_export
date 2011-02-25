@@ -1,4 +1,3 @@
-; $Id$
 name = Node export relation
 description = Helps maintain relationships between nodes (e.g. Node reference) during Node export operations.
 dependencies[] = node_export

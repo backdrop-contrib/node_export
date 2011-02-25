@@ -1,4 +1,3 @@
-; $Id$
 name = Node export XML
 description = "Adds XML format to Node export"
 dependencies[] = node_export

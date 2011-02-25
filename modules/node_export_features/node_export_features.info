@@ -1,4 +1,3 @@
-; $Id$
 name = Node export features
 description = Adds Features support to Node export
 dependencies[] = node_export
