@@ -1,4 +1,3 @@
-; $Id$
 name = Node export files
 description = "Export helper module for handling files (CCK FileField, Upload, and Image)."
 dependencies[] = node_export

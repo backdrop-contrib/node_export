@@ -1,4 +1,3 @@
-; $Id$
 name = Node export drupal 6 migrate
 description = "Corrects nodes imported from Drupal 6"
 dependencies[] = node_export

@@ -1,4 +1,3 @@
-; $Id$
 name = Node export features
 description = Adds features support to Node export using UUID
 dependencies[] = node_export

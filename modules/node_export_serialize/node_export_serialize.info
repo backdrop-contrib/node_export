@@ -1,4 +1,3 @@
-; $Id$
 name = Node export serialize
 description = "Adds serialize format to Node export"
 dependencies[] = node_export

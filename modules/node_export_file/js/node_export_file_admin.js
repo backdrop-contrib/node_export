@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * @file node_export_file_admin.js
