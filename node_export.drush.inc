@@ -157,23 +157,21 @@ function node_export_drush_callback_export() {
     'language',
     'type',
   );
-  $wheres = array();
-  $args = array();
+
+  $query = db_select('node')->fields('nid');
+  $execute = FALSE;
   foreach ($filters as $filter) {
     $filter_option = drush_get_option($filter);
     if ($filter_option) {
-      $filter_option_values = explode(",", $filter_option);
-      $filter_option_placeholders = array();
-
-      $wheres[] = $filter . " IN (:" . $filter . ")";
-      $args = $args + $filter_option_values;
+      $query->condition($filter, explode(',', $filter_option), 'IN');
+      // Only execute if conditions are set.
+      $execute = TRUE;
     }
   }
-  if (!empty($wheres)) {
-    $query = "SELECT nid FROM {node} WHERE (" . implode(") AND (", $wheres) . ")";
-    $result = db_query($query, $args);
+  if ($execute) {
+    $result = $query->execute();
     foreach ($result as $row) {
-      $nid_filters['filters'][] = $row['nid'];
+      $nid_filters['filters'][] = $row->nid;
     }
   }
 
@@ -182,7 +180,7 @@ function node_export_drush_callback_export() {
   if ($sql) {
     $result = db_query($sql);
     foreach ($result as $row) {
-      $nid_filters['sql'][] = $row['nid'];
+      $nid_filters['sql'][] = $row->nid;
     }
   }
 
@@ -214,11 +212,10 @@ function node_export_drush_callback_export() {
   }
   else {
     // Is there are no filters at all, do a query to get all nids.
-    $query = "SELECT nid FROM {node}";
-    $result = db_query($query);
+    $result = db_select('node')->fields('nid')->execute();
     $nids = array();
-    while ($row = db_fetch_array($result)) {
-      $nids[] = $row['nid'];
+    foreach ($result as $row) {
+      $nids[] = $row->nid;
     }
   }
 
