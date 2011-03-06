@@ -158,7 +158,7 @@ function node_export_drush_callback_export() {
     'type',
   );
 
-  $query = db_select('node')->fields('nid');
+  $query = db_select('node', 'n')->fields('n', array('nid'));
   $execute = FALSE;
   foreach ($filters as $filter) {
     $filter_option = drush_get_option($filter);
@@ -212,7 +212,7 @@ function node_export_drush_callback_export() {
   }
   else {
     // Is there are no filters at all, do a query to get all nids.
-    $result = db_select('node')->fields('nid')->execute();
+    $result = db_select('node', 'n')->fields('n', array('nid'))->execute();
     $nids = array();
     foreach ($result as $row) {
       $nids[] = $row->nid;
