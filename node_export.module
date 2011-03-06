@@ -175,7 +175,7 @@ function node_export_node_type_delete($info) {
  */
 function node_export_views_api() {
   return array(
-    'api' => 2,
+    'api' => 3,
     'path' => drupal_get_path('module', 'node_export') . '/views',
   );
 }
