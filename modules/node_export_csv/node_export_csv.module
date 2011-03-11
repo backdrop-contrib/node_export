@@ -75,7 +75,7 @@ function node_export_csv_encode_node(&$header, &$encoded_nodes, $node_key, $var,
 
     if (is_object($v) || is_array($v)) {
       // Recurse through the structure.
-      node_export_csv_encode_node(&$header, &$encoded_nodes, $node_key, $v, $header_value);
+      node_export_csv_encode_node($header, $encoded_nodes, $node_key, $v, $header_value);
     }
     else {
       // Insert $header_value into the header.
@@ -143,7 +143,7 @@ function node_export_csv_encode_array_insert_after(&$array, $new, $before) {
     }
     else {
       // Insert.
-      node_export_csv_encode_array_insert_at(&$array, $new, $position);
+      node_export_csv_encode_array_insert_at($array, $new, $position);
     }
   }
   return $position;
