@@ -22,17 +22,26 @@ function node_export_d6_migrate_node_export_node_import_alter(&$node, $original_
 /**
  * Migrate the body field.
  *
- * The code in this function is from node_update_7006().
+ * The code in this function is based on node_update_7006().
  */
 function node_export_d6_migrate_process_node_body(&$node, $original_node) {
+  // Used below when updating the stored text format of each node body.
+  $sandbox['existing_text_formats'] = db_query("SELECT format FROM {filter_format}")->fetchCol();
+
   $langcode = empty($original_node->language) ? LANGUAGE_NONE : $original_node->language;
+
+  $node->body = array(
+    $langcode => array(
+      "0" => array(),
+    )
+  );
 
   if (!empty($original_node->teaser) && $original_node->teaser != text_summary($original_node->body)) {
     $node->body[$langcode][0]['summary'] = $original_node->teaser;
   }
 
   // Do this after text_summary() above.
-  $break = '';
+  $break = '<!--break-->';
   if (substr($original_node->body, 0, strlen($break)) == $break) {
     $original_node->body = substr($original_node->body, strlen($break));
   }
