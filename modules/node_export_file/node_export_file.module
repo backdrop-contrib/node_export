@@ -215,7 +215,7 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
 
     // Strip off anything that isn't a file, if no files are found skip to
     // the next attribute
-    if (($files = node_export_file_check_files($field[$node->language])) == FALSE) {
+    if (($files = node_export_file_check_files(array_key_exists($node->language, $field) ? $field[$node->language] : NULL)) == FALSE) {
       continue;
     }
 
@@ -391,17 +391,30 @@ function node_export_file_import_file(&$file) {
   // FIXME: same filesize does NOT mean "same file".
   if (is_file($file->uri) &&
     (
-      !is_file($file->node_export_file_path) ||
+      (!isset($file->node_export_file_path) || !is_file($file->node_export_file_path)) ||
       (
         is_file($file->node_export_file_path) &&
         filesize($file->uri) == filesize($file->node_export_file_path)
       )
     )
   ) {
+    // Keep existing file if it exists already at this uri (see also #1023254)
+    // Issue #1058750.
+    $query = db_select('file_managed', 'f')
+        ->fields('f', array('fid'))
+        ->condition('uri', $file->uri)
+        ->execute()
+        ->fetchCol();
+
+    if (!empty($query)) {
+      watchdog('node_export_file_import_file', 'kept existing managed file at uri "%uri"', array('%uri' => $file->uri), WATCHDOG_NOTICE);
+      $file = file_load(array_shift($query));
+    }
+
     file_save($file);
   }
   elseif (isset($file->node_export_file_data)) {
-    $directory = dirname($file->uri);
+    $directory = drupal_dirname($file->uri);
     if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       if (file_put_contents($file->uri, base64_decode($file->node_export_file_data))) {
         file_save($file);
