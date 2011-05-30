@@ -16,7 +16,22 @@
  * @param $node
  *   The node to determine access for.
  */
-function hook_node_export_access_alter(&$access, $node) {
+function hook_node_export_access_export_alter(&$access, $node) {
+  // no example code
+}
+
+/**
+ * Override import access on a node.
+ *
+ * Let other modules alter this - for example to only allow some users to
+ * import specific nodes or types.
+ *
+ * @param &$access
+ *   Boolean access value for current user.
+ * @param $node
+ *   The node to determine access for.
+ */
+function hook_node_export_access_import_alter(&$access, $node) {
   // no example code
 }
 

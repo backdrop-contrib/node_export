@@ -57,7 +57,7 @@ function node_export_menu() {
     foreach ($format_handlers as $format_handler => $format) {
       if ($selected_formats[$format_handler]) {
         $items['node/%node/node_export/' . $format_handler] = array(
-          'access callback' => 'node_export_access',
+          'access callback' => 'node_export_access_export',
           'access arguments' => array(1),
           'page callback' => 'node_export_gui',
           'page arguments' => array(1, $format_handler),
@@ -72,7 +72,7 @@ function node_export_menu() {
   }
   else {
     $items['node/%node/node_export'] = array(
-      'access callback' => 'node_export_access',
+      'access callback' => 'node_export_access_export',
       'access arguments' => array(1),
       'page callback' => 'node_export_gui',
       'page arguments' => array(1),
@@ -105,38 +105,65 @@ function node_export_menu() {
 
 /**
  * Check access to export a node.
- *
- * @todo
- *  Check if the user has permission to use the filter formats in all the
- *  fields of the node.  Don't know how to do this.
  */
-function node_export_access($node) {
+function node_export_access_export($node) {
   global $user;
   if (is_int($node)) {
     $node = node_load($node);
   }
-  // Check basic permissions first.
+  // Check basic role permissions first.
   $access = (user_access('export nodes') || ($user->uid && ($node->uid == $user->uid) && user_access('export own nodes')));
   // Make sure the user can view the original node content.
   $access = $access && node_access('view', $node);
   // Check additional conditions
-  $access = $access && (node_export_is_permitted($node->type) && node_access('create', $node->type));
-  // Let other modules alter this - for exmple to only allow some users
+  $access = $access && node_export_is_permitted($node->type);
+  // Let other modules alter this - for example to only allow some users
   // to export specific nodes or types.
-  drupal_alter("node_export_access", $access, $node);
+  drupal_alter("node_export_access_export", $access, $node);
+  return $access;
+}
+
+/**
+ * Check access to import a node.
+ */
+function node_export_access_import($node) {
+  global $user;
+  // Check basic role permissions first.
+  $access = user_access('use PHP to import nodes');
+  // Check additional conditions
+  $access = $access && (node_export_is_permitted($node->type) && node_access('create', $node->type));
+  // Let other modules alter this - for example to only allow some users
+  // to import specific nodes or types.
+  drupal_alter("node_export_access_import", $access, $node);
   return $access;
 }
 
 /**
  * Check access to export an array of nodes.
  */
-function node_export_access_nodes($nodes) {
+function node_export_access_export_nodes($nodes) {
   // Convert to array if it isn't already.
   if (is_object($nodes)) {
     $nodes = array($nodes);
   }
   foreach ($nodes as &$node) {
-    if (!node_export_access($node)) {
+    if (!node_export_access_export($node)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Check access to import an array of nodes.
+ */
+function node_export_access_import_nodes($nodes) {
+  // Convert to array if it isn't already.
+  if (is_object($nodes)) {
+    $nodes = array($nodes);
+  }
+  foreach ($nodes as &$node) {
+    if (!node_export_access_import($node)) {
       return FALSE;
     }
   }
@@ -245,7 +272,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   foreach ($nids as $nid) {
     $original_node = node_load($nid);
 
-    if (!node_export_access($original_node)) {
+    if (!node_export_access_export($original_node)) {
       // Halt exporting.
       $error = $msg_t("You do not have permission to perform a Node export on one or more of these nodes.  No nodes exported.");
       return array(
@@ -405,7 +432,7 @@ function node_export_import($code_string, $msg_t = 't') {
     );
   }
 
-  if (!node_export_access_nodes($nodes)) {
+  if (!node_export_access_import_nodes($nodes)) {
     // There was a problem with permissions.
     $error = $msg_t(
       'You do not have permission to perform a Node export: import on one or more of these nodes.  No nodes imported.'
