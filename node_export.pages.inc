@@ -130,7 +130,7 @@ function node_export_settings() {
     '#title' => t('Omitted content types'),
     '#default_value' => variable_get('node_export_omitted', array()),
     '#options' => $types,
-    '#description' => t('Select any types which should never be exported. Typically you may want to select content types for which importing fails.'),
+    '#description' => t('Select any types which should never be exported or imported. Typically you may want to select content types for which importing fails.'),
   );
 
   $form['publishing'] = array(
