@@ -313,11 +313,11 @@ function node_export_form($form, &$form_state, $nids, $code_string) {
   $form = array();
   if (variable_get('node_export_code', 'all') == 'all') {
     $form['nids'] = array(
-      '#type' => 'value',
+      '#type' => 'hidden',
       '#value' => $nids,
     );
     $form['code_string'] = array(
-      '#type' => 'value',
+      '#type' => 'hidden',
       '#value' => $code_string,
     );
     $form['download_file'] = array(
