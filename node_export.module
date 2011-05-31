@@ -773,3 +773,23 @@ function node_export_format_handlers() {
   }
   return $format_handlers;
 }
+
+if (!function_exists('uuid_get_uuid')) {
+   /**
+    * API function to get the UUID of an object based on its serial ID.
+    *
+    * @param $table
+    *   Base table of the object. Currently, one of node, revision_revisions,
+    *   users, vocabulary or term_data.
+    * @param $key
+    *   The name of the serial ID column.
+    * @param $id
+    *   The serial ID of the object.
+    * @return
+    *   The UUID of the object, or FALSE if not found.
+    */
+   function uuid_get_uuid($table, $key, $id) {
+     $uuid_table = 'uuid_'. $table;
+     return db_result(db_query("SELECT uuid FROM {{$uuid_table}} WHERE $key = %d", $id));
+   }
+}
