@@ -214,8 +214,6 @@ function node_export_node_operations() {
   $operations = array();
   if (user_access('export nodes')) {
 
-    module_load_include('inc', 'node_export', 'node_export.pages');
-
     $selected_formats = variable_get('node_export_format', array('node_code'));
     if (count(array_filter($selected_formats)) > 1) {
       $format_handlers = node_export_format_handlers();
@@ -223,7 +221,7 @@ function node_export_node_operations() {
         if ($selected_formats[$format_handler]) {
           $operations['node_export_' . $format_handler] = array(
             'label' => t('Node export') . " (" . $format['#title'] . ")",
-            'callback' => 'node_export_gui',
+            'callback' => 'node_export_bulk_operation',
             'callback arguments' => array($format_handler),
           );
         }
@@ -233,7 +231,7 @@ function node_export_node_operations() {
       $operations = array(
         'node_export' => array(
           'label' => t('Node export'),
-          'callback' => 'node_export_gui',
+          'callback' => 'node_export_bulk_operation',
           'callback arguments' => array(NULL),
         ),
       );
@@ -241,6 +239,14 @@ function node_export_node_operations() {
 
   }
   return $operations;
+}
+
+/**
+ * Callback for use with hook_node_operations().
+ */
+function node_export_bulk_operation($nodes = NULL, $format = NULL, $delivery = NULL) {
+  module_load_include('inc', 'node_export', 'node_export.pages');
+  return node_export_gui($nodes, $format, $delivery);
 }
 
 /**
