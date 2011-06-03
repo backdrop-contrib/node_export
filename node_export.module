@@ -126,6 +126,38 @@ function node_export_access_import($node) {
 }
 
 /**
+ * Check access to export an array of nodes.
+ */
+function node_export_access_export_nodes($nodes) {
+  // Convert to array if it isn't already.
+  if (is_object($nodes)) {
+    $nodes = array($nodes);
+  }
+  foreach ($nodes as &$node) {
+    if (!node_export_access_export($node)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Check access to import an array of nodes.
+ */
+function node_export_access_import_nodes($nodes) {
+  // Convert to array if it isn't already.
+  if (is_object($nodes)) {
+    $nodes = array($nodes);
+  }
+  foreach ($nodes as &$node) {
+    if (!node_export_access_import($node)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
  * Check whether exporting this type is permitted.
  */
 function node_export_is_permitted($type) {
