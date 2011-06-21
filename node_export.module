@@ -331,7 +331,8 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
-  $format_handler = $format ? $format : reset(variable_get('node_export_format', array('node_code')));
+  $node_export_format = variable_get('node_export_format', array('node_code'));
+  $format_handler = $format ? $format : reset($node_export_format);
   if (!isset($format_handlers[$format_handler])) {
     $format_handler = 'node_code';
   }
