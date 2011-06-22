@@ -7,8 +7,6 @@
  * Allows a Node export to be posted directly from one site to another.
  */
 
-define('NODE_EXPORT_PUSH_PATH', 'admin/content/node_export_push');
-
 /**
  * Implements hook_menu().
  */
