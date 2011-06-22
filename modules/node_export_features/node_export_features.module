@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implementation of hook_features_api()
+ * Implements hook_features_api().
  */
 function node_export_features_features_api() {
   return array(
@@ -10,164 +10,108 @@ function node_export_features_features_api() {
       'feature_source' => TRUE,
       'default_hook' => 'node_export_features_default',
       'default_file' => FEATURES_DEFAULTS_INCLUDED,
-      'file' => drupal_get_path('module', 'node_export_features') .'/node_export_features.features.inc',
     ),
   );
 }
 
 /**
- * Implementation of hook_node_export_bulk_alter()
- *
- * Maintain node reference relations
+ * Implements hook_features_export_options().
  */
-function node_export_features_node_export_alter(&$nodes, $op) {
-  if ($op == 'export') {
+function node_export_features_features_export_options() {
+  $options = array();
 
-    foreach ($nodes as $node) {
-      $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
-      // Create uuid if it doesnt exists
-      if (empty($uuid)) {
-        $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
-        $node->uuid = $uuid;
-      }
+  $types = node_type_get_names();
 
-      $keyed_nodes[$node->nid] = $node;
-    }
+  $query = 'SELECT n.nid, n.title, n.type, u.uuid
+    FROM {node} n INNER JOIN {uuid_node} u
+    ON n.nid = u.nid ';
 
-    // Keyed nodes are important for preventing same node loaded again via references
-    foreach($keyed_nodes as $node) {
-      node_export_features_load_referednode($keyed_nodes, $node);
-    }
-
-    $nodes = array_values($keyed_nodes);
+  $ommited_types = array_filter(variable_get('node_export_omitted', array()));
+  if (!empty($ommited_types)) {
+    $exclude = "'" . implode("', '", $ommited_types) . "'";
+    $query .= ' WHERE n.type NOT IN (' . $exclude . ') ';
   }
-  elseif ($op == 'import') {
-    foreach ($nodes as $node) {
-      node_export_features_set_references($node->nid, $node->uuid);
-    }
+
+  $result = db_query($query);
+
+  $query .= ' ORDER BY n.type, n.title ASC';
+  foreach ($result as $node) {
+    $options[$node->uuid] = t('@type: @title', array(
+      '@type' => $types[$node->type],
+      '@title' => $node->title,
+    ));
   }
-  // Handle node insertions/updations here
-  elseif ($op == 'after import') {
-    // Now that all nodes are imported/updated we can restore the node referenced from UUIDS
-    // NOTE: This is done because if the node referenced node is new, they we have
-    // to wait for node to be saved.
-    node_export_features_update_node_references($nodes);
-  }
+
+  return $options;
+
 }
 
 /**
- * Implementation of hook_node_export_node_alter()
+ * Implements hook_features_export().
  */
-function node_export_features_node_export_node_alter(&$node, $original_node, $method) {
-  $node_exists = node_get_by_uuid($node->uuid);
-  // If node already exists do a node update
-  if ($node_exists) {
-    $node->nid = $node_exists->nid;
-    $node->vid = $node_exists->vid;
-    if (variable_get('node_export_features_make_revisions', FALSE)) {
-      $node->revision = TRUE;
-    }
+function node_export_features_features_export($data, &$export, $module_name = '') {
+  $pipe = array();
+
+  $export['dependencies']['module'] = 'node_export_features';
+
+  foreach ($data as $uuid) {
+    $node = node_get_by_uuid($uuid);
+
+    $export['features']['node_export_features'][$uuid] = $uuid;
+    $pipe['node'][$node->type] = $node->type;
   }
+
+  return $pipe;
+
 }
 
 /**
- * Recursively check for node references
+ * Implements hook_features_export_render().
  */
-function node_export_features_update_node_references($nodes) {
-  foreach ($nodes as $node) {
-    $uuid[$node->uuid] = $node->nid;
+function node_export_features_features_export_render($module, $data, $export = NULL) {
+  foreach ($data as $uuid) {
+    $nodes[] = node_get_by_uuid($uuid);
   }
+  drupal_alter('node_export', $nodes, 'export');
 
-  foreach ($nodes as $new_node) {
-    $node_reference_fields = node_export_features_get_nodereference_fields($new_node->type);
-    // If no node reference fields are available loop
-    if (empty($node_reference_fields)) {
-      continue;
-    }
-    foreach ($node_reference_fields as $node_reference_field) {
-      foreach ($node->{$node_reference_field} as $key => $node_reference) {
-        if (!empty($node_reference['nid'])) {
-          $node_uuid = node_export_features_get_references($node_reference['nid']);
-          $new_node->{$node_reference_field}[$key] = array('nid' => $uuid[$node_uuid]);
-        }
-      }
-    }
-    node_save($new_node);
-  }
+  $node_export_code = '  $nodes = ' . features_var_export($nodes, '  ') . ';';
+  $node_export_code .= PHP_EOL . '  return $nodes;';
+  return array('node_export_features_default' => $node_export_code);
 }
 
 /**
- * Recursively load node references
+ * Implements hook_feature_revert().
  */
-function node_export_features_load_referednode(&$nodes, $node) {
-  // Get list of node reference fields for this node
-  $node_reference_fields = node_export_features_get_nodereference_fields($node->type);
-
-  // If no node reference fields are available return
-  if (empty($node_reference_fields)) {
-    return;
-  }
-  foreach ($node_reference_fields as $node_reference_field) {
-    foreach ($new_node->{$node_reference_field} as $key => $node_reference) {
-      if (!empty($node_reference['nid'])) {
-        // Load the referenced nodes only if its not already loaded
-        // This will save if from infinite loop of back references
-        if (!isset($nodes[$node_reference['nid']])) {
-          $uuid = uuid_get_uuid('node', 'nid', $node_reference['nid']);
-          // Create UUID for node reference if not already created
-          if (empty($uuid)) {
-            $uuid = uuid_set_uuid('node', 'nid', $node_reference['nid']);
-          }
-          $new_node = node_load($node_reference['nid']);
-
-          $nodes[] = $new_node;
-          // Recursively load references of new nodes
-          node_export_features_load_referednode($nodes, $new_node);
-        }
-      }
-    }
-  }
+function node_export_features_features_revert($module = NULL) {
+  node_export_features_features_rebuild($module);
 }
 
 /**
- * Statically cache old node ids for mapping
+ * Implements hook_feature_rebuild().
  */
-function node_export_features_set_references($id, $uuid = NULL, $type = 'node') {
-  static $map;
-  if (isset($uuid)) {
-    $map[$type][$id] = $uuid;
-  }
-  else {
-    return $map[$type][$id];
-  }
-}
+function node_export_features_features_rebuild($module) {
+  $nodes = features_get_default('node_export_features', $module);
+  if (!empty($nodes)) {
+    module_load_include('inc', 'node', 'node.pages');
 
-function node_export_features_get_references($id) {
-  return node_export_features_set_references($id);
-}
+    $format = 'features';
 
+    drupal_alter('node_export', $nodes, 'import', $format);
 
-/**
- * Get an array listing the names of all nodereference fields.
- *
- * @return
- *   Array of all created nodereference fields
- **/
-function node_export_features_get_nodereference_fields($content_type_name) {
-  // cache result
-  static $nodereference_fields = array();
+    foreach ($nodes as $data) {
+      $original_node = (object)$data;
+      node_object_prepare($node);
 
-  if (empty($nodereference_fields[$content_type_name])) {
-    $ct = content_types($content_type_name);
-    $fields = $ct['fields'];
-    if (!empty($fields)) {
-      foreach ($fields as $name => $field) {
-        if ($field['type'] == 'nodereference') {
-          $nodereference_fields[$content_type_name][$name] = $name;
-        }
-      }
+      $node = node_export_node_clone($original_node);
+
+      drupal_alter('node_export_node', $node, $original_node, 'import');
+
+      $node = node_submit($node);
+      node_save($node);
+      $new_nodes[] = $node;
     }
-  }
 
-  return $nodereference_fields[$content_type_name];
+    drupal_alter('node_export', $new_nodes, 'after import', $format);
+  }
 }
+

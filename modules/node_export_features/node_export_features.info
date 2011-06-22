@@ -1,7 +1,7 @@
 name = Node export features
-description = Adds features support to Node export using UUID
+description = Adds features support to Node export
 dependencies[] = node_export
 dependencies[] = uuid
 dependencies[] = features
-core = 6.x
+core = 7.x
 package = "Node export"
