@@ -807,10 +807,10 @@ if (!function_exists('uuid_set_uuid')) {
       return FALSE;
     }
 
-    $uuid_table = 'uuid_'. $table;
-    db_query("UPDATE {". $uuid_table ."} SET uuid = '%s' WHERE ". $key ." = %d", $uuid, $serial_id);
-    if (!db_affected_rows()) {
-      @db_query("INSERT INTO {". $uuid_table ."} (". $key .", uuid) VALUES (%d, '%s')", $serial_id, $uuid);
+    $uuid_table = 'uuid_' . $table;
+    $query = db_query("UPDATE {" . $uuid_table . "} SET uuid = :uuid WHERE " . $key . " = :id", array(':uuid' => $uuid, ':id' => $serial_id));
+    if (!$query->rowCount()) {
+      @db_query("INSERT INTO {" . $uuid_table . "} (" . $key . ", uuid) VALUES (:id, :uuid)", array(':uuid' => $uuid, ':id' => $serial_id));
     }
 
     return $uuid;
@@ -833,7 +833,7 @@ if (!function_exists('uuid_get_uuid')) {
    *   The UUID of the object, or FALSE if not found.
    */
   function uuid_get_uuid($table, $key, $id) {
-    $uuid_table = 'uuid_'. $table;
-    return db_result(db_query("SELECT uuid FROM {{$uuid_table}} WHERE $key = %d", $id));
+    $uuid_table = 'uuid_' . $table;
+    return db_query("SELECT uuid FROM {{$uuid_table}} WHERE $key = :id", array(':id' => $id))->fetchField();
   }
 }
