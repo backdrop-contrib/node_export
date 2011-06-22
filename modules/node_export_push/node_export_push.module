@@ -41,7 +41,7 @@ function node_export_push_form_alter(&$form, &$form_state, $form_id) {
       $form['submit'] = array(
         '#type' => 'submit',
         '#value' => t('Push'),
-        '#suffix' => ' ' . t('the node to') . ' ' . l($destination_name, $destination),
+        '#suffix' => t('!push the node to !site', array('!push' => '', '!site' => l($destination_name, $destination))),
       );
       $form['#attributes'] = array('target' => '_blank');
       break;
