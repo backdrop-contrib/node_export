@@ -415,13 +415,13 @@ function node_export_file_import_file(&$file) {
       $file = file_load(array_shift($query));
     }
 
-    file_save($file);
+    $file = file_save($file);
   }
   elseif (isset($file->node_export_file_data)) {
     $directory = drupal_dirname($file->uri);
     if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       if (file_put_contents($file->uri, base64_decode($file->node_export_file_data))) {
-        file_save($file);
+        $file = file_save($file);
       }
     }
   }
@@ -438,7 +438,7 @@ function node_export_file_import_file(&$file) {
       // At this point the $file->node_export_file_path will contain the
       // destination of the copied file
       //$file->uri = $node_export_file_path;
-      file_save($file);
+      $file = file_save($file);
     }
   }
   // The file is in a remote location, attempt to download it
@@ -486,7 +486,7 @@ function node_export_file_import_file(&$file) {
     fclose($source);
     fclose($dest);
 
-    file_save($file);
+    $file = file_save($file);
   }
   // Unknown error
   else {
