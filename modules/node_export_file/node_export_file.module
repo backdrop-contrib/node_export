@@ -7,7 +7,7 @@
  * Export helper module for handling CCK FileFields, Uploaded files, and Images.
  */
 
-define('EXPORT_FILE_FILES_DIR_SUBSTITUTION', '#FILES_DIRECTORY_PATH#');
+define('NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION', '#FILES_DIRECTORY_PATH#');
 
 /**
  * Implements hook_help().
@@ -363,15 +363,15 @@ function node_export_file_get_export_data($file, $export_mode, $assets_path) {
  * installations and non-standard files directory locations.
  */
 function node_export_file_clean_local_file_path(&$path) {
-  $path = preg_replace('/^' . preg_quote('public:/', '/') . '/', EXPORT_FILE_FILES_DIR_SUBSTITUTION, $path);
+  $path = preg_replace('/^' . preg_quote('public:/', '/') . '/', NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION, $path);
 }
 
 /**
- * Replaces the EXPORT_FILE_FILES_DIR_SUBSTITUTION with the files directory
+ * Replaces the NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION with the files directory
  * path, wherever found.
  */
 function node_export_file_unclean_local_file_path(&$path) {
-  $path = strtr($path, array(EXPORT_FILE_FILES_DIR_SUBSTITUTION => 'public:/'));
+  $path = strtr($path, array(NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION => 'public:/'));
 }
 
 /**
@@ -391,13 +391,14 @@ function node_export_file_import_file(&$file) {
   // The file is already in the right location AND either the
   // node_export_file_path is not set or the node_export_file_path and filepath
   // contain the same file
-  // FIXME: same filesize does NOT mean "same file".
   if (is_file($file->uri) &&
     (
       (!isset($file->node_export_file_path) || !is_file($file->node_export_file_path)) ||
       (
         is_file($file->node_export_file_path) &&
-        filesize($file->uri) == filesize($file->node_export_file_path)
+        filesize($file->uri) == filesize($file->node_export_file_path) &&
+        strtoupper(dechex(crc32(file_get_contents($file->uri)))) ==
+          strtoupper(dechex(crc32(file_get_contents($file->node_export_file_path))))
       )
     )
   ) {
