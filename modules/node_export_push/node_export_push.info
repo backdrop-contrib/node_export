@@ -1,4 +1,4 @@
 name = Node export push 
 description = "Allows a node export to be pushed directly from one site to another."
-core = 6.x
+core = 7.x
 dependencies[] = node_export
