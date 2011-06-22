@@ -1,49 +1,72 @@
 <?php
 
 /**
- * Implements hook_node_export_alter().
+ * @file
+ * The Node export relation module.
  *
- * Maintain node relationships.
+ * Helps maintain relationships between nodes during Node export operations.
  */
-function node_export_relation_node_export_alter(&$nodes, $op) {
+
+ /**
+ * Implements hook_node_export_alter().
+ */
+function node_export_relation_node_export_alter(&$nodes, $format) {
   // Currently this module only supports 'Node reference' relationships, so wrap
   // all this functionality in a check for the 'node_reference' module.   Once
   // this module handles more relationships this check should be moved down to
   // each of the function calls that contain the string 'node_reference' in the
   // function name.
   if (module_exists('node_reference')) {
-    if ($op == 'export') {
-
-      foreach ($nodes as $node) {
-        $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
-        // Create uuid if it doesnt exists
-        if (empty($uuid)) {
-          $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
-          $node->uuid = $uuid;
-        }
-
-        $keyed_nodes[$node->nid] = $node;
+    foreach ($nodes as $node) {
+      $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
+      // Create uuid if it doesnt exists
+      if (empty($uuid)) {
+        $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
+        $node->uuid = $uuid;
       }
 
-      // Keyed nodes are important for preventing same node loaded again via references.
-      foreach ($keyed_nodes as $node) {
-        node_export_relation_node_reference_load($keyed_nodes, $node);
-      }
+      $keyed_nodes[$node->nid] = $node;
+    }
 
-      $nodes = array_values($keyed_nodes);
+    // Keyed nodes are important for preventing same node loaded again via references.
+    foreach ($keyed_nodes as $node) {
+      node_export_relation_node_reference_load($keyed_nodes, $node);
     }
-    elseif ($op == 'import') {
-      foreach ($nodes as $node) {
-        node_export_relation_node_reference_map($node->nid, $node->uuid);
-      }
+
+    $nodes = array_values($keyed_nodes);
+  }
+}
+
+/**
+ * Implements hook_node_export_import_alter().
+ */
+function node_export_relation_node_export_import_alter(&$nodes, $format) {
+  // Currently this module only supports 'Node reference' relationships, so wrap
+  // all this functionality in a check for the 'node_reference' module.   Once
+  // this module handles more relationships this check should be moved down to
+  // each of the function calls that contain the string 'node_reference' in the
+  // function name.
+  if (module_exists('node_reference')) {
+    foreach ($nodes as $node) {
+      node_export_relation_node_reference_map($node->nid, $node->uuid);
     }
-    // Handle node insertions/updations here
-    elseif ($op == 'after import') {
-      // Now that all nodes are imported/updated we can restore the node referenced from UUIDS
-      // NOTE: This is done because if the node referenced node is new, they we have
-      // to wait for node to be saved.
-      node_export_relation_node_reference_update($nodes);
-    }
+  }
+}
+
+/**
+ * Implements hook_node_export_alter().
+ */
+function node_export_relation_node_export_after_import_alter(&$nodes, $format) {
+  // Currently this module only supports 'Node reference' relationships, so wrap
+  // all this functionality in a check for the 'node_reference' module.   Once
+  // this module handles more relationships this check should be moved down to
+  // each of the function calls that contain the string 'node_reference' in the
+  // function name.
+  if (module_exists('node_reference')) {
+    // Now that all nodes are imported/updated we can restore the node referenced from UUIDS
+    // NOTE: This is done because if the node referenced node is new, they we have
+    // to wait for node to be saved.
+    node_export_relation_node_reference_update($nodes);
   }
 }
 
