@@ -92,6 +92,12 @@ function node_export_file_form_alter(&$form, $form_state, $form_id) {
  *   for other modules that are very similar to filefield (eg: upload).
  */
 function node_export_file_node_export_node_alter(&$node, $original_node, $op) {
+  if ($op == 'export') {
+    $types = array_filter(variable_get('node_export_file_types', array()));
+    if (!in_array($node->type, $types)) {
+      return;
+    }
+  }
   node_export_file_alter_filefield($node, $original_node, $op, 'node_export_file_filefield_filter');
   node_export_file_alter_upload($node, $original_node, $op);
   node_export_file_alter_image($node, $original_node, $op);
