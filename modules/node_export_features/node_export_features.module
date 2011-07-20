@@ -72,7 +72,8 @@ function node_export_features_features_export_render($module, $data, $export = N
   foreach ($data as $uuid) {
     $nodes[] = node_get_by_uuid($uuid);
   }
-  drupal_alter('node_export', $nodes, 'export');
+  $format = 'features';
+  drupal_alter('node_export', $nodes, $format);
 
   $node_export_code = '  $nodes = ' . features_var_export($nodes, '  ') . ';';
   $node_export_code .= PHP_EOL . '  return $nodes;';
@@ -96,7 +97,7 @@ function node_export_features_features_rebuild($module) {
 
     $format = 'features';
 
-    drupal_alter('node_export', $nodes, 'import', $format);
+    drupal_alter('node_export', $nodes, $format);
 
     foreach ($nodes as $data) {
       $original_node = (object)$data;
@@ -104,14 +105,14 @@ function node_export_features_features_rebuild($module) {
 
       $node = node_export_node_clone($original_node);
 
-      drupal_alter('node_export_node', $node, $original_node, 'import');
+      drupal_alter('node_export_node', $node, $original_node);
 
       $node = node_submit($node);
       node_save($node);
       $new_nodes[] = $node;
     }
-
-    drupal_alter('node_export', $new_nodes, 'after import', $format);
+    $op = 'after import';
+    drupal_alter('node_export', $new_nodes, $format);
   }
 }
 
