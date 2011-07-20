@@ -161,8 +161,9 @@ function node_export_relation_node_reference_fields($content_type_name) {
     if (!empty($fields)) {
       foreach ($fields as $field) {
         if ($field['type'] == 'node_reference') {
-        if ((isset($field['display']['default']['module']) && $field['display']['default']['module'] == 'user_reference')) {
-          $node_reference_fields[$content_type_name][$field['field_name']] = $field['field_name'];
+          if ((isset($field['display']['default']['module']) && $field['display']['default']['module'] == 'user_reference')) {
+            $node_reference_fields[$content_type_name][$field['field_name']] = $field['field_name'];
+          }
         }
       }
     }
