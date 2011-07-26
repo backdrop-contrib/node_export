@@ -70,8 +70,25 @@ function node_export_features_features_export($data, &$export, $module_name = ''
  */
 function node_export_features_features_export_render($module, $data, $export = NULL) {
   foreach ($data as $uuid) {
-    $nodes[] = node_get_by_uuid($uuid);
+    $original_nodes[] = node_get_by_uuid($uuid);
   }
+  $nodes = array();
+
+  foreach ($original_nodes as $original_node) {
+    if (!node_export_access_export($original_node)) {
+      // Halt exporting.
+      t("You do not have permission to perform a Node export on one or more of these nodes.  No nodes exported.");
+      return FALSE;
+    }
+
+    $node = node_export_node_prepare($original_node);
+
+    // Let other modules do special fixing up.
+    drupal_alter('node_export_node', $node, $original_node);
+
+    $nodes[] = $node;
+  }
+
   $format = 'features';
   drupal_alter('node_export', $nodes, $format);
 
@@ -97,7 +114,28 @@ function node_export_features_features_rebuild($module) {
 
     $format = 'features';
 
-    drupal_alter('node_export', $nodes, $format);
+    $nodes = node_export_restore_recursion($nodes);
+
+    $types_exist = node_export_import_types_check($nodes);
+    if ($types_exist !== TRUE) {
+      // There was a problem with the content types check.
+      t(
+        'Error encountered during import.  Node types unknown on this site: %t.  No nodes imported.',
+        array('%t' => implode(", ", $types_exist))
+      );
+      return FALSE;
+    }
+
+    if (!node_export_access_import_nodes($nodes)) {
+      // There was a problem with permissions.
+      t(
+        'You do not have permission to perform a Node export: import on one or more of these nodes.  No nodes imported.'
+      );
+      return FALSE;
+    }
+
+    // Let other modules do special fixing up.
+    drupal_alter('node_export_import', $nodes, $format);
 
     foreach ($nodes as $data) {
       $original_node = (object)$data;
@@ -105,14 +143,18 @@ function node_export_features_features_rebuild($module) {
 
       $node = node_export_node_clone($original_node);
 
-      drupal_alter('node_export_node', $node, $original_node);
+      // Let other modules do special fixing up.
+      drupal_alter('node_export_node_import', $node, $original_node);
 
-      $node = node_submit($node);
-      node_save($node);
+      // @todo - find out what node_submit() was for, and if it's a good idea to use consistently throughout node export?
+      //$node = node_submit($node);
+      node_export_save($node);
       $new_nodes[] = $node;
     }
-    $op = 'after import';
-    drupal_alter('node_export', $new_nodes, $format);
+    drupal_alter('node_export_after_import', $new_nodes, $format);
+
+    // Clear the page and block caches.
+    cache_clear_all();
   }
 }
 

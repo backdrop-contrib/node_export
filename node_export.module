@@ -287,38 +287,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
       );
     }
 
-    $node = clone($original_node);
-
-    // Fix taxonomy array
-    if (isset($node->taxonomy) && count($node->taxonomy)) {
-      $vocabularies = taxonomy_get_vocabularies();
-      $new_taxonomy = array();
-      foreach ($node->taxonomy as $term) {
-        // Free-tagging vocabularies need a different format
-        if ($vocabularies[$term->vid]->tags) {
-          $new_taxonomy['tags'][$term->vid][] = $term->name;
-        }
-        else {
-          $new_taxonomy[$term->vid][$term->tid] = $term->tid;
-        }
-      }
-      if (isset($new_taxonomy['tags']) && count($new_taxonomy['tags'])) {
-        // Comma seperate the tags
-        foreach ($new_taxonomy['tags'] as $vid => $tags) {
-          $new_taxonomy['tags'][$vid] = implode(', ', $tags);
-        }
-      }
-      $node->taxonomy = $new_taxonomy;
-    }
-
-    // Fix menu array
-    $node->menu = node_export_get_menu($original_node);
-
-    // Remove recursion from the object.
-    $node = node_export_remove_recursion($node);
-
-    // Add a parameter to identify this node as coming from D7, might be useful some day.
-    $node->node_export_drupal_version = '7';
+    $node = node_export_node_prepare($original_node);
 
     // Let other modules do special fixing up.
     drupal_alter('node_export_node', $node, $original_node);
@@ -351,6 +320,46 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     'output' => $code_string,
   );
 
+}
+
+/**
+ * Prepare a single node during export.
+ */
+function node_export_node_prepare($original_node) {
+  $node = clone($original_node);
+
+  // Fix taxonomy array
+  if (isset($node->taxonomy) && count($node->taxonomy)) {
+    $vocabularies = taxonomy_get_vocabularies();
+    $new_taxonomy = array();
+    foreach ($node->taxonomy as $term) {
+      // Free-tagging vocabularies need a different format
+      if ($vocabularies[$term->vid]->tags) {
+        $new_taxonomy['tags'][$term->vid][] = $term->name;
+      }
+      else {
+        $new_taxonomy[$term->vid][$term->tid] = $term->tid;
+      }
+    }
+    if (isset($new_taxonomy['tags']) && count($new_taxonomy['tags'])) {
+      // Comma seperate the tags
+      foreach ($new_taxonomy['tags'] as $vid => $tags) {
+        $new_taxonomy['tags'][$vid] = implode(', ', $tags);
+      }
+    }
+    $node->taxonomy = $new_taxonomy;
+  }
+
+  // Fix menu array
+  $node->menu = node_export_get_menu($original_node);
+
+  // Remove recursion from the object.
+  $node = node_export_remove_recursion($node);
+
+  // Add a parameter to identify this node as coming from D7, might be useful some day.
+  $node->node_export_drupal_version = '7';
+
+  return $node;
 }
 
 /**
