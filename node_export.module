@@ -222,7 +222,7 @@ function node_export_node_operations() {
           $operations['node_export_' . $format_handler] = array(
             'label' => t('Node export') . " (" . $format['#title'] . ")",
             'callback' => 'node_export_bulk_operation',
-            'callback arguments' => array($format_handler),
+            'callback arguments' => array('format' => $format_handler),
           );
         }
       }
@@ -232,7 +232,7 @@ function node_export_node_operations() {
         'node_export' => array(
           'label' => t('Node export'),
           'callback' => 'node_export_bulk_operation',
-          'callback arguments' => array(NULL),
+          //'callback arguments' => array(),
         ),
       );
     }
@@ -287,7 +287,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
       );
     }
 
-    $node = node_export_node_prepare($original_node);
+    $node = node_export_prepare_node($original_node);
 
     // Let other modules do special fixing up.
     drupal_alter('node_export_node', $node, $original_node);
@@ -325,7 +325,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 /**
  * Prepare a single node during export.
  */
-function node_export_node_prepare($original_node) {
+function node_export_prepare_node(&$original_node) {
   $node = clone($original_node);
 
   // Fix taxonomy array
@@ -683,8 +683,10 @@ function node_export_node_clone($original_node) {
  * another nodes menu. Returns NULL if the node has no menu title.
  */
 function node_export_get_menu($node) {
+
   // This will fetch the existing menu item if the node had one.
   module_invoke_all('node_prepare', $node);
+
   $type = $node->type;
 
   // Only keep the values we care about.

@@ -286,7 +286,7 @@ function node_export_nodes_to_nids($nodes) {
       if (is_object($node)) {
         $nids[] = $node->nid;
       }
-      elseif (is_int($node)) {
+      elseif (is_numeric($node)) {
         $nids[] = $node;
       }
     }
@@ -316,10 +316,6 @@ function node_export_form($form, &$form_state, $nids, $code_string) {
       '#type' => 'hidden',
       '#value' => $nids,
     );
-    $form['code_string'] = array(
-      '#type' => 'hidden',
-      '#value' => $code_string,
-    );
     $form['download_file'] = array(
       '#type' => 'submit',
       '#value' => t('Download file'),
@@ -345,8 +341,8 @@ function node_export_form($form, &$form_state, $nids, $code_string) {
  */
 function node_export_form_submit($form, &$form_state) {
   // Get file.
-  $nids = $form_state['values']['nids'];
-  $code_string = $form_state['values']['code_string'];
+  $nids = explode(' ', $form_state['values']['nids']);
+  $code_string = $form_state['values']['export'];
   node_export_get_file($nids, $code_string);
 }
 

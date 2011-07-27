@@ -80,7 +80,7 @@ function node_export_features_features_export_render($module, $data, $export = N
       return FALSE;
     }
 
-    $node = node_export_node_prepare($original_node);
+    $node = node_export_prepare_node($original_node);
 
     // Let other modules do special fixing up.
     drupal_alter('node_export_node', $node, $original_node);

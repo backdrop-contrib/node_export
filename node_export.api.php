@@ -207,6 +207,6 @@ function hook_node_export($nodes, $format) {
  *   XML implementation for malformed XML imports for an example that combines
  *   information for the user followed by generated errors from PHP.
  */
-function node_export_node_export_import($code_string) {
+function hook_node_export_import($code_string) {
   // no example code
 }
