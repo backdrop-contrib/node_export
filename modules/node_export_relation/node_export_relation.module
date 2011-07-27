@@ -18,10 +18,10 @@ function node_export_relation_node_export_alter(&$nodes, $format) {
   // function name.
   if (module_exists('node_reference')) {
     foreach ($nodes as $node) {
-      $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
+      $uuid = uuid_get_uuid('node', 'nid', $node->nid);
       // Create uuid if it doesnt exists
       if (empty($uuid)) {
-        $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
+        $uuid = uuid_set_uuid('node', 'nid', $node->nid);
         $node->uuid = $uuid;
       }
 
