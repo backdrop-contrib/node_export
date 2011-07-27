@@ -22,9 +22,8 @@ function node_export_features_features_export_options() {
 
   $types = node_type_get_names();
 
-  $query = 'SELECT n.nid, n.title, n.type, u.uuid
-    FROM {node} n INNER JOIN {uuid_node} u
-    ON n.nid = u.nid ';
+  $query = 'SELECT n.nid, n.title, n.type, n.uuid
+    FROM {node} n ';
 
   $ommited_types = array_filter(variable_get('node_export_omitted', array()));
   if (!empty($ommited_types)) {
@@ -55,7 +54,7 @@ function node_export_features_features_export($data, &$export, $module_name = ''
   $export['dependencies']['module'] = 'node_export_features';
 
   foreach ($data as $uuid) {
-    $node = node_get_by_uuid($uuid);
+    $node = node_load(uuid_node_find($uuid));
 
     $export['features']['node_export_features'][$uuid] = $uuid;
     $pipe['node'][$node->type] = $node->type;
@@ -70,7 +69,7 @@ function node_export_features_features_export($data, &$export, $module_name = ''
  */
 function node_export_features_features_export_render($module, $data, $export = NULL) {
   foreach ($data as $uuid) {
-    $original_nodes[] = node_get_by_uuid($uuid);
+    $original_nodes[] = node_load(uuid_node_find($uuid));
   }
   $nodes = array();
 
