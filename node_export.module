@@ -95,7 +95,7 @@ function node_export_menu() {
  */
 function node_export_access_export($node) {
   global $user;
-  if (is_int($node)) {
+  if (is_numeric($node)) {
     $node = node_load($node);
   }
   // Check basic role permissions first.
@@ -255,7 +255,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   global $user;
 
   // Make $nids an array if it isn't.
-  if (is_int($nids)) {
+  if (is_numeric($nids)) {
     $nids = array($nids);
   }
   elseif (is_object($nids)) {
