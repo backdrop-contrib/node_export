@@ -70,12 +70,20 @@ function node_export_features_features_export($data, &$export, $module_name = ''
  */
 function node_export_features_features_export_render($module, $data, $export = NULL) {
   foreach ($data as $uuid) {
-    $nodes[] = node_get_by_uuid($uuid);
+    $node = node_get_by_uuid($uuid);
+    $nids[] = $node->nid;
   }
-  drupal_alter('node_export', $nodes, 'export');
-
-  $node_export_code = '  $nodes = ' . features_var_export($nodes, '  ') . ';';
-  $node_export_code .= PHP_EOL . '  return $nodes;';
+  $result = node_export($nids);
+  if ($result['success']) {
+    $node_export['code_string'] = $result['output'];
+    $node_export_code = '  $node_export = ' . $node_export . ';';
+  }
+  else {
+    foreach ($result['output'] as $error) {
+      $node_export_code  = '  // ' . $error . PHP_EOL;
+    }
+    $node_export_code .= '  $node_export = array();';
+  }
   return array('node_export_features_default' => $node_export_code);
 }
 
@@ -90,28 +98,19 @@ function node_export_features_features_revert($module = NULL) {
  * Implementation of hook_feature_rebuild().
  */
 function node_export_features_features_rebuild($module) {
-  $nodes = features_get_default('node_export_features', $module);
-  if (!empty($nodes)) {
-    module_load_include('inc', 'node', 'node.pages');
-
-    $format = 'features';
-
-    drupal_alter('node_export', $nodes, 'import', $format);
-
-    foreach ($nodes as $data) {
-      $original_node = (object)$data;
-      node_object_prepare($node);
-
-      $node = node_export_node_clone($original_node);
-
-      drupal_alter('node_export_node', $node, $original_node, 'import');
-
-      $node = node_submit($node);
-      node_save($node);
-      $new_nodes[] = $node;
+  $node_export = features_get_default('node_export_features', $module);
+  if (!empty($node_export)) {
+    $result = node_export_import($node_export['code_string']);
+    if (!$result['success']) {
+      foreach ($result['output'] as $error) {
+        drupal_set_message($error, 'error');
+      }
     }
-
-    drupal_alter('node_export', $new_nodes, 'after import', $format);
+    else {
+      foreach ($result['output'] as $status) {
+        drupal_set_message($status);
+      }
+    }
   }
 }
 
