@@ -324,7 +324,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     $format_handlers[$format_handler]['#module'],
     'node_export',
     $nodes,
-    $format
+    $format_handler
   );
 
   // Let modules modify the node code.
