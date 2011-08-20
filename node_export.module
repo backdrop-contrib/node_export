@@ -295,9 +295,6 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     $nodes[] = $node;
   }
 
-  // Let other modules do special fixing up.
-  drupal_alter('node_export', $nodes, $format);
-
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
   $node_export_format = variable_get('node_export_format', array('node_code'));
@@ -305,6 +302,10 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   if (!isset($format_handlers[$format_handler])) {
     $format_handler = 'node_code';
   }
+
+  // Let other modules do special fixing up.
+  drupal_alter('node_export', $nodes, $format_handler);
+
   $code_string = module_invoke(
     $format_handlers[$format_handler]['#module'],
     'node_export',
@@ -313,7 +314,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   );
 
   // Let modules modify the node code.
-  drupal_alter('node_export_encode', $code_string, $nodes, $format);
+  drupal_alter('node_export_encode', $code_string, $nodes, $format_handler);
 
   return array(
     'success' => TRUE,
