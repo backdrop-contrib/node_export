@@ -5,7 +5,7 @@
  */
 function node_export_features_features_api() {
   $features = array();
-  $features['node_export'] = array(
+  $features['node_export_features'] = array(
     'name' => t('Node export'),
     'feature_source' => TRUE,
     'default_hook' => 'node_export_features_default',
