@@ -37,7 +37,7 @@ function node_export_drush_command() {
     ),
   );
   $items['node-export-import'] = array(
-    'callback' => 'drupal_node_export_callback_export',
+    'callback' => 'drupal_node_export_callback_import',
     'description' => "Import nodes previously exported with Node export.",
     'options' => array(
       '--uid' => "User ID of user to save nodes as. If not given will use the user with an ID of 1. You may specify 0 for the Anonymous user.",
@@ -265,7 +265,7 @@ function drupal_node_export_callback_export() {
  *
  * Import nodes from data.
  */
-function drupal_node_export_callback_export() {
+function drupal_node_export_callback_import() {
   // Switch to admin or the specified user so imported nodes are not anonymous.
   $uid = drush_get_option('uid');
   // Test on NULL so uid may be given as 0.
