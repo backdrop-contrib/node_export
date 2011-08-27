@@ -79,8 +79,8 @@ function node_export_relation_node_reference_update($nodes) {
   foreach ($nodes as $node) {
     $uuid[$node->uuid] = $node->nid;
   }
-  foreach ($nodes as $new_node) {
-    $node_reference_fields = node_export_relation_node_reference_fields($new_node->type);
+  foreach ($nodes as $node) {
+    $node_reference_fields = node_export_relation_node_reference_fields($node->type);
     if (!empty($node_reference_fields)) {
       foreach ($node_reference_fields as $node_reference_field) {
         $items = field_get_items('node', $node, $field_name);
@@ -88,13 +88,13 @@ function node_export_relation_node_reference_update($nodes) {
           foreach ($items as &$node_reference) {
             if (!empty($node_reference['nid'])) {
               $node_uuid = node_export_relation_node_reference_map($node_reference['nid']);
-              $new_node->{$node_reference_field}[$key] = array('nid' => $uuid[$node_uuid]);
+              $node->{$node_reference_field}[$key] = array('nid' => $uuid[$node_uuid]);
             }
           }
         }
       }
     }
-    node_save($new_node);
+    node_save($node);
   }
 }
 
