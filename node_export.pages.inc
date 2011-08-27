@@ -454,6 +454,9 @@ function node_export_import_form_validate($form, &$form_state) {
 
 /**
  * Submit function for import form.
+ *
+ * @todo: is there a way to get the contents of the file without using
+ * file_save_upload()?
  */
 function node_export_import_form_submit($form, &$form_state) {
   if ($_FILES['files']['name']['file']) {
@@ -474,6 +477,7 @@ function node_export_import_form_submit($form, &$form_state) {
       $code_string = file_get_contents($file->uri);
       unlink($file->uri);
     }
+    file_delete($file);
   }
   elseif ($form_state['values']['code']) {
     $code_string = trim($form_state['values']['code']);
