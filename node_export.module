@@ -812,7 +812,7 @@ if (!function_exists('uuid_set_uuid')) {
    */
   function uuid_set_uuid($table, $key, $serial_id, $uuid = FALSE) {
     if (empty($uuid)) {
-      $uuid = uuid_uuid();
+      $uuid = uuid_generate();
     }
 
     if (!uuid_is_valid($uuid)) {
