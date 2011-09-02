@@ -3,4 +3,3 @@ description = "Allows users to export a node and the import into another Drupal 
 core = 6.x
 package = "Node export"
 dependencies[] = uuid
-dependencies[] = uuid_node
