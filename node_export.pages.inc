@@ -341,7 +341,7 @@ function node_export_form($form, &$form_state, $nids, $code_string) {
  */
 function node_export_form_submit($form, &$form_state) {
   // Get file.
-  $nids = explode(' ', $form_state['values']['nids']);
+  $nids = $form_state['values']['nids'];
   $code_string = $form_state['values']['export'];
   node_export_get_file($nids, $code_string);
 }

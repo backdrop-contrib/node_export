@@ -83,7 +83,7 @@ function node_export_relation_node_reference_update($nodes) {
     $node_reference_fields = node_export_relation_node_reference_fields($node->type);
     if (!empty($node_reference_fields)) {
       foreach ($node_reference_fields as $node_reference_field) {
-        $items = field_get_items('node', $node, $field_name);
+        $items = field_get_items('node', $node, $node_reference_field);
         if (!empty($items)) {
           foreach ($items as &$node_reference) {
             if (!empty($node_reference['nid'])) {
@@ -106,7 +106,7 @@ function node_export_relation_node_reference_load(&$nodes, $node) {
   $node_reference_fields = node_export_relation_node_reference_fields($node->type);
   if (!empty($node_reference_fields)) {
     foreach ($node_reference_fields as $node_reference_field) {
-      $items = field_get_items('node', $node, $field_name);
+      $items = field_get_items('node', $node, $node_reference_field);
       if (!empty($items)) {
         foreach ($items as &$node_reference) {
           if (!empty($node_reference['nid'])) {
@@ -157,11 +157,11 @@ function node_export_relation_node_reference_fields($content_type_name) {
     $fields = field_info_instances('node', $content_type_name);
     if (!empty($fields)) {
       foreach ($fields as $field) {
-        if ($field['type'] == 'node_reference') {
-          if ((isset($field['display']['default']['module']) && $field['display']['default']['module'] == 'user_reference')) {
-            $node_reference_fields[$content_type_name][$field['field_name']] = $field['field_name'];
-          }
+
+        if (isset($field['widget']['module']) && $field['widget']['module'] == 'node_reference' && !empty($field['field_name'])) {
+          $node_reference_fields[$content_type_name][$field['field_name']] = $field['field_name'];
         }
+
       }
     }
   }
