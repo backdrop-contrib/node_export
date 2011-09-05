@@ -64,8 +64,7 @@ USAGE
    a) Use the 'Node export' tab on a node page.
    b) Use the Content page (admin/content/node) to filter the nodes you wish to
       export and then choose 'Node export' under the 'Update options'.
-   c) Use the VBO module: http://drupal.org/project/views_bulk_operations
-   d) Use Drush: http://drupal.org/project/drush
+   c) Use Drush: http://drupal.org/project/drush
 2. To import nodes, either:
    a) Use the form at 'Node export: import' under 'Add content'
       (node/add/node_export).
