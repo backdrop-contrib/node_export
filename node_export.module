@@ -466,6 +466,7 @@ function node_export_import($code_string, $msg_t = 't') {
   drupal_alter('node_export_import', $nodes, $used_format);
   $new_nodes = array();
   $new_nid = 0;
+  $new_nids = array();
   $messages = array();
   foreach ($nodes as $original_node) {
     $node = node_export_node_clone($original_node);
@@ -475,6 +476,7 @@ function node_export_import($code_string, $msg_t = 't') {
 
     node_export_save($node);
     $new_nodes[] = $node;
+    $new_nids[] = $node->nid;
     $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/' . $node->nid)));
     $count++;
   }
@@ -487,6 +489,7 @@ function node_export_import($code_string, $msg_t = 't') {
   return array(
     'success' => TRUE,
     'output' => $messages,
+    'nids' => $new_nids,
   );
 
 }
