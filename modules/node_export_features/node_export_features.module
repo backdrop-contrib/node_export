@@ -65,9 +65,7 @@ function node_export_features_features_export($data, &$export, $module_name = ''
  * Implements hook_features_export_render().
  */
 function node_export_features_features_export_render($module, $data, $export = NULL) {
-  foreach ($data as $uuid) {
-    $nids[] = uuid_node_find($uuid);
-  }
+  $nids = entity_get_id_by_uuid('node', $data);
   $result = node_export($nids);
   if ($result['success']) {
     $node_export['code_string'] = $result['output'];
