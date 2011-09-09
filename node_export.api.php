@@ -121,7 +121,7 @@ function hook_node_export_import_alter(&$nodes, $format) {
  * references, and additional data required by the nodes.
  *
  * @param &$nodes
- *   The array of nodes to alter.
+ *   The array of nodes to alter - IMPORTANT: keyed by node id.
  * @param $format
  *   The format of node code being used.
  */
