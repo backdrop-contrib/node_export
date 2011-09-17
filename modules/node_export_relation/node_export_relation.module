@@ -17,6 +17,7 @@ function node_export_relation_node_export_alter(&$nodes, $format) {
   // each of the function calls that contain the string 'node_reference' in the
   // function name.
   if (module_exists('node_reference')) {
+    $keyed_nodes = array();
     foreach ($nodes as $node) {
       $uuid = uuid_get_uuid('node', 'nid', $node->nid);
       // Create uuid if it doesnt exists
