@@ -116,7 +116,7 @@ function node_export_access_import($node) {
   // Check basic role permissions first.
   $access = user_access('use PHP to import nodes');
   // Check additional conditions
-  $access = $access && filter_access($node->format) && node_access('create', $node->type));
+  $access = $access && filter_access($node->format) && node_access('create', $node->type);
   // Let other modules alter this - for example to only allow some users
   // to import specific nodes or types.
   drupal_alter("node_export_access_import", $access, $node);
