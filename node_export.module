@@ -333,6 +333,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   return array(
     'success' => TRUE,
     'output' => $code_string,
+    'format' => $format_handler,
   );
 
 }
