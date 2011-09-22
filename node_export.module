@@ -342,6 +342,10 @@ function node_export_prepare_node(&$original_node) {
     $node->taxonomy = $new_taxonomy;
   }
 
+  // Attach path to the node.  Drupal doesn't attach this anymore for
+  // performance reasons http://drupal.org/node/332333#comment-2163634.
+  $node->path = array('source' => 'node/' . $node->nid);
+
   // Fix menu array
   $node->menu = node_export_get_menu($original_node);
 
