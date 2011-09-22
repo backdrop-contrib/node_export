@@ -156,13 +156,6 @@ function node_export_settings() {
     '#maxlength' => 30,
     '#description' => t('If there are more than this many nodes, the list of node ids for the filename will not be built.'),
   );
-  $form['basic']['node_export_omitted'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Omitted content types'),
-    '#default_value' => variable_get('node_export_omitted', array()),
-    '#options' => $types,
-    '#description' => t('Select any types which should never be exported or imported. Typically you may want to select content types for which importing fails.'),
-  );
 
   $form['publishing'] = array(
     '#type' => 'fieldset',
