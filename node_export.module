@@ -102,8 +102,6 @@ function node_export_access_export($node) {
   $access = (user_access('export nodes') || ($user->uid && ($node->uid == $user->uid) && user_access('export own nodes')));
   // Make sure the user can view the original node content.
   $access = $access && node_access('view', $node);
-  // Check additional conditions
-  $access = $access && node_export_is_permitted($node->type);
   // Let other modules alter this - for example to only allow some users
   // to export specific nodes or types.
   drupal_alter("node_export_access_export", $access, $node);
@@ -118,7 +116,7 @@ function node_export_access_import($node) {
   // Check basic role permissions first.
   $access = user_access('use PHP to import nodes');
   // Check additional conditions
-  $access = $access && (node_export_is_permitted($node->type) && filter_access($node->format) && node_access('create', $node->type));
+  $access = $access && filter_access($node->format) && node_access('create', $node->type));
   // Let other modules alter this - for example to only allow some users
   // to import specific nodes or types.
   drupal_alter("node_export_access_import", $access, $node);
@@ -155,14 +153,6 @@ function node_export_access_import_nodes($nodes) {
     }
   }
   return TRUE;
-}
-
-/**
- * Check whether exporting this type is permitted.
- */
-function node_export_is_permitted($type) {
-  $omitted = variable_get('node_export_omitted', array());
-  return empty($omitted[$type]);
 }
 
 /**
