@@ -653,7 +653,7 @@ function node_export_node_clone($original_node) {
     }
     elseif (module_exists('pathauto')) {
       // Prevent pathauto from creating a new path alias.
-      $node->pathauto_perform_alias = FALSE;
+      $node->path['pathauto'] = FALSE;
     }
 
     if (variable_get('node_export_reset_book_mlid_' . $node->type, TRUE) && isset($node->book['mlid'])) {
