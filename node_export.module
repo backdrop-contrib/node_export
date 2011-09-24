@@ -82,7 +82,7 @@ function node_export_menu() {
     'title' => 'Node export: import',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('node_export_import_form'),
-    'access arguments' => array('use PHP to import nodes'),
+    'access callback' => 'node_export_access_import',
     'description' => 'Import content using <em>Node export</em>.',
     'file' => 'node_export.pages.inc',
   );
@@ -111,18 +111,32 @@ function node_export_access_export($node) {
 /**
  * Check access to import a node.
  */
-function node_export_access_import($node) {
+function node_export_access_import($node = NULL) {
   global $user;
-  // Check basic role permissions first.
-  $access = user_access('use PHP to import nodes');
-  // Check additional conditions
-  $access = $access && filter_access($node->format) && node_access('create', $node->type);
+
+  if (defined('MAINTENANCE_MODE') && MAINTENANCE_MODE == 'install') {
+    // During the install phase $user is the Anonymous user; however, in
+    // practice $user is performing tasks only granted to the admin user
+    // (eg: installing modules, changing site settings).  For this reason
+    // it seems sensible to allow this "Anonymous admin" user to import
+    // any nodes they wish.
+    $access = TRUE;
+  }
+  else {
+    // Check basic role permissions first.
+    $access = user_access('use PHP to import nodes');
+
+    if ($node && $access) {
+      // Check node conditions.
+      $access = node_access('create', $node->type) && filter_access($node->format);
+    }
+  }
+
   // Let other modules alter this - for example to only allow some users
   // to import specific nodes or types.
   drupal_alter("node_export_access_import", $access, $node);
   return $access;
 }
-
 /**
  * Check access to export an array of nodes.
  */
@@ -357,6 +371,17 @@ function node_export_import_types_check($nodes) {
  *   translated strings to be shown to the user as messages.
  */
 function node_export_import($code_string, $msg_t = 't') {
+  // Early check to avoid letting hooligans and the elderly pass data to the
+  // eval() function call.
+  if (!node_export_access_import()) {
+    $error = $msg_t(
+      'You do not have permission to import any nodes.'
+    );
+    return array(
+      'success' => FALSE,
+      'output' => array($error),
+    );
+  }
 
   // Allow modules to manipulate the $code_string.
   drupal_alter('node_export_decode', $code_string);
