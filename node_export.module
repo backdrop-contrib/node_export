@@ -396,12 +396,14 @@ function node_export_import_types_check($nodes) {
  *   The string of export code.
  * @param $msg_t
  *   Function used to translate.
+ * @param $save
+ *   When TRUE will save the nodes that are imported.
  * @return
  *   An array with keys 'success' which is a boolean value representing whether
  *   the import was successful and 'output' which contains an array of
  *   translated strings to be shown to the user as messages.
  */
-function node_export_import($code_string, $msg_t = 't') {
+function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   // Early check to avoid letting hooligans and the elderly pass data to the
   // eval() function call.
   if (!node_export_access_import()) {
@@ -484,31 +486,50 @@ function node_export_import($code_string, $msg_t = 't') {
   $count = 0;
   $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export_import', $nodes, $used_format);
+  drupal_alter('node_export_import', $nodes, $used_format, $save);
   $new_nodes = array();
   $messages = array();
   foreach ($nodes as $original_node) {
     $node = node_export_node_clone($original_node);
 
     // Let other modules do special fixing up.
-    drupal_alter('node_export_node_import', $node, $original_node);
+    drupal_alter('node_export_node_import', $node, $original_node, $save);
 
-    node_export_save($node);
-    $new_nodes[$node->nid] = $node;
-    $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/' . $node->nid)));
-    $count++;
+    if ($save) {
+      node_export_save($node);
+      $new_nodes[$node->nid] = $node;
+      $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/' . $node->nid)));
+      $count++;
+    }
+    else {
+      $new_nodes[] = $node;
+    }
   }
-  drupal_alter('node_export_after_import', $new_nodes, $used_format);
-  $messages[] = $msg_t("!count of !total nodes were imported.  Some values may have been reset depending on Node export's configuration.", array('!total' => $total, '!count' => $count));
 
-  // Clear the page and block caches.
-  cache_clear_all();
+  if ($save) {
+    drupal_alter('node_export_after_import', $new_nodes, $used_format, $save);
+    $messages[] = $msg_t("!count of !total nodes were imported.  Some values may have been reset depending on Node export's configuration.", array('!total' => $total, '!count' => $count));
 
-  return array(
-    'success' => TRUE,
-    'output' => $messages,
-    'nids' => array_keys($new_nodes),
-  );
+    // Clear the page and block caches.
+    cache_clear_all();
+
+    // Nodes were saved, so return the nids.
+    return array(
+      'success' => TRUE,
+      'output' => $messages,
+      'nids' => array_keys($new_nodes),
+      'format' => $used_format,
+    );
+  }
+  else {
+    // We didn't save, so return full nodes.
+    return array(
+      'success' => TRUE,
+      'output' => $messages,
+      'nodes' => $new_nodes,
+      'format' => $used_format,
+    );
+  }
 
 }
 

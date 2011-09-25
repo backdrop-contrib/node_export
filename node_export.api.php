@@ -73,8 +73,10 @@ function hook_node_export_node_alter(&$node, $original_node) {
  *   The node to alter.
  * @param $original_node
  *   The unaltered node.
+ * @param $save
+ *   Whether the node will be saved by node_export_import().
  */
-function hook_node_export_node_import_alter(&$node, $original_node) {
+function hook_node_export_node_import_alter(&$node, $original_node, $save) {
   // no example code
 }
 
@@ -107,8 +109,10 @@ function hook_node_export_alter(&$nodes, $format) {
  *   The array of nodes to alter.
  * @param $format
  *   The format of node code being used.
+ * @param $save
+ *   Whether the nodes will be saved by node_export_import().
  */
-function hook_node_export_import_alter(&$nodes, $format) {
+function hook_node_export_import_alter(&$nodes, $format, $save) {
   // no example code
 }
 
@@ -124,8 +128,10 @@ function hook_node_export_import_alter(&$nodes, $format) {
  *   The array of nodes to alter - IMPORTANT: keyed by node id.
  * @param $format
  *   The format of node code being used.
+ * @param $save
+ *   Whether the nodes were saved by node_export_import().
  */
-function hook_node_export_after_import_alter(&$nodes, $format) {
+function hook_node_export_after_import_alter(&$nodes, $format, $save) {
   // no example code
 }
 
