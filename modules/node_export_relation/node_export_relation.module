@@ -96,9 +96,12 @@ function node_export_relation_node_reference_load(&$nodes, $node) {
                 $uuid = uuid_set_uuid('node', 'nid', $node_reference['nid']);
               }
               $new_node = node_load($node_reference['nid']);
-              $nodes[] = $new_node;
-              // Recursively load references of new nodes
-              node_export_relation_node_reference_load($nodes, $new_node);
+              if (node_export_access_export($new_node)) {
+                $new_node = node_export_prepare_node($new_node);
+                $nodes[] = $new_node;
+                // Recursively load references of new nodes
+                node_export_relation_node_reference_load($nodes, $new_node);
+              }
             }
           }
         }
