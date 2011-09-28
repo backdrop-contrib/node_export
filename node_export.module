@@ -327,6 +327,13 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
  * Prepare a single node during export.
  */
 function node_export_prepare_node(&$original_node) {
+  // Create UUID if it's not there.
+  if (!uuid_get_uuid('node', 'nid', $original_node->nid)) {
+    $original_node->uuid = uuid_set_uuid('node', 'nid', $original_node->nid);
+    // Save it so future node exports are consistent.
+    node_save($original_node);
+  }
+
   $node = drupal_clone($original_node);
 
   // Fix taxonomy array
