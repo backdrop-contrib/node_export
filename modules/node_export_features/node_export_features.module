@@ -18,6 +18,8 @@ function node_export_features_features_api() {
  * Implements hook_features_export_options().
  */
 function node_export_features_features_export_options() {
+  static $loaded_nodes = 0;
+
   $options = array();
 
   $query = db_select('node', 'n')
@@ -31,12 +33,18 @@ function node_export_features_features_export_options() {
     $uuid = uuid_get_uuid('node', 'nid', $row->nid);
     // Create uuid if it doesn't exist.
     if (empty($uuid)) {
-      $node = node_load($row->nid);
-      $uuid = uuid_set_uuid('node', 'nid', $node->nid);
-      $node->uuid = $uuid;
-      // Save for consistency.
-      node_save($node);
-
+      if ($loaded_nodes > 20) {
+        drupal_set_message("Too many nodes are missing UUID, therefore some nodes will not be available for features export. Repeatedly triggering this message will help this problem.", 'warning');
+        break;
+      }
+      else {
+        $node = node_load($row->nid);
+        $uuid = uuid_set_uuid('node', 'nid', $node->nid);
+        $node->uuid = $uuid;
+        // Save for consistency.
+        node_save($node);
+        $loaded_nodes++;
+      }
     }
 
     $options[$uuid] = t('@type: @title', array(
