@@ -21,17 +21,25 @@ function node_export_features_features_export_options() {
   $options = array();
 
   $query = db_select('node', 'n')
-    ->fields('n', array('uuid', 'title', 'type'))
+    ->fields('n', array('nid', 'title', 'type'))
     ->orderBy('type')
     ->orderBy('title');
-  $ommited_types = array_filter(variable_get('node_export_omitted', array()));
-  if (!empty($ommited_types)) {
-    $query->condition('n.type', $ommited_types, 'NOT IN');
-  }
+
   $result = $query->execute();
 
   foreach ($result as $row) {
-    $options[$row->uuid] = t('@type: @title', array(
+    $uuid = uuid_get_uuid('node', 'nid', $row->nid);
+    // Create uuid if it doesn't exist.
+    if (empty($uuid)) {
+      $node = node_load($row->nid);
+      $uuid = uuid_set_uuid('node', 'nid', $node->nid);
+      $node->uuid = $uuid;
+      // Save for consistency.
+      node_save($node);
+
+    }
+
+    $options[$uuid] = t('@type: @title', array(
       '@type' => node_type_get_name($row->type),
       '@title' => $row->title,
     ));
