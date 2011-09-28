@@ -308,6 +308,17 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   // Let other modules do special fixing up.
   drupal_alter('node_export', $nodes, $format_handler);
 
+  // If any nodes are set to FALSE, then an error was triggered in another module.
+  // Currently modules doing this should also leave a watchdog warning.
+  if (in_array(FALSE, $nodes)) {
+    // Halt exporting.
+    $error = $msg_t('An error occurred when processing nodes, please check your logs.  No nodes exported.');
+    return array(
+      'success' => FALSE,
+      'output' => array($error),
+    );
+  }
+
   $code_string = module_invoke(
     $format_handlers[$format_handler]['#module'],
     'node_export',
