@@ -14,22 +14,14 @@ function node_export_relation_node_export_alter(&$nodes, $op) {
   if (module_exists('nodereference')) {
      if ($op == 'export') {
 
+       // Keyed nodes are important for preventing same node loaded again via references.
        $keyed_nodes = array();
-
        foreach ($nodes as $node) {
-         $uuid = uuid_get_uuid('node', 'nid', $data['nid']);
-         // Create uuid if it doesnt exists
-         if (empty($uuid)) {
-           $uuid = uuid_set_uuid('node', 'nid', $data['nid']);
-           $node->uuid = $uuid;
-         }
-
          $keyed_nodes[$node->nid] = $node;
        }
 
-       // Keyed nodes are important for preventing same node loaded again via references.
-       foreach($keyed_nodes as $node) {
-         node_export_relation_node_reference_load($keyed_nodes, $node);
+       foreach (array_keys($keyed_nodes) as $nid) {
+         node_export_relation_node_reference_load($keyed_nodes, $nid);
        }
 
        $nodes = array_values($keyed_nodes);
@@ -50,9 +42,7 @@ function node_export_relation_node_export_alter(&$nodes, $op) {
 }
 
 /**
- * Recursively check for node references.
- *
- * @todo: what recursion?
+ * Update node references after import.
  */
 function node_export_relation_node_reference_update($nodes) {
   foreach ($nodes as $node) {
@@ -79,7 +69,17 @@ function node_export_relation_node_reference_update($nodes) {
 /**
  * Recursively load node references.
  */
-function node_export_relation_node_reference_load(&$nodes, $node) {
+function node_export_relation_node_reference_load(&$nodes, $nid) {
+  // Alias for easy referencing.
+  $node = &$nodes[$nid];
+
+  // Handle uuid for the node.
+  $uuid = uuid_get_uuid('node', 'nid', $node->nid);
+  // Create UUID if not already created.
+  if (empty($uuid)) {
+    $uuid = uuid_set_uuid('node', 'nid', $node->nid);
+  }
+
   // Get list of node reference fields for this node
   $node_reference_fields = node_export_relation_node_reference_fields($node->type);
   if (!empty($node_reference_fields)) {
@@ -90,17 +90,12 @@ function node_export_relation_node_reference_load(&$nodes, $node) {
             // Load the referenced nodes only if its not already loaded
             // This will save if from infinite loop of back references
             if (!isset($nodes[$node_reference['nid']])) {
-              $uuid = uuid_get_uuid('node', 'nid', $node_reference['nid']);
-              // Create UUID for node reference if not already created
-              if (empty($uuid)) {
-                $uuid = uuid_set_uuid('node', 'nid', $node_reference['nid']);
-              }
               $new_node = node_load($node_reference['nid']);
               if (node_export_access_export($new_node)) {
                 $new_node = node_export_prepare_node($new_node);
-                $nodes[] = $new_node;
+                $nodes[$new_node->nid] = $new_node;
                 // Recursively load references of new nodes
-                node_export_relation_node_reference_load($nodes, $new_node);
+                node_export_relation_node_reference_load($nodes, $new_node->nid);
               }
             }
           }
