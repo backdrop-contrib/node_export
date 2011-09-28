@@ -18,27 +18,38 @@ function node_export_features_features_api() {
  * Implementation of hook_features_export_options().
  */
 function node_export_features_features_export_options() {
+  static $loaded_nodes = 0;
+
   $options = array();
 
   $types = node_get_types('names');
 
-  $query = 'SELECT n.nid, n.title, n.type, u.uuid
-    FROM {node} n INNER JOIN {uuid_node} u
-    ON n.nid = u.nid ';
-
-  $ommited_types = array_filter(variable_get('node_export_omitted', array()));
-  if (!empty($ommited_types)) {
-    $exclude = "'" . implode("', '", $ommited_types) . "'";
-    $query .= ' WHERE n.type NOT IN (' . $exclude . ') ';
-  }
-
+  $query = 'SELECT n.nid, n.title, n.type FROM {node} n';
+  $query .= ' ORDER BY n.type, n.title ASC';
   $result = db_query($query);
 
-  $query .= ' ORDER BY n.type, n.title ASC';
-  while ($node = db_fetch_object($result)) {
-    $options[$node->uuid] = t('@type: @title', array(
-      '@type' => $types[$node->type],
-      '@title' => $node->title,
+  while ($row = db_fetch_object($result)) {
+
+    $uuid = uuid_get_uuid('node', 'nid', $row->nid);
+    // Create uuid if it doesn't exist.
+    if (empty($uuid)) {
+      if ($loaded_nodes > 20) {
+        drupal_set_message("Too many nodes are missing UUID, therefore some nodes will not be available for features export. Repeatedly triggering this message will help this problem.", 'warning');
+        break;
+      }
+      else {
+        $node = node_load($row->nid);
+        $uuid = uuid_set_uuid('node', 'nid', $node->nid);
+        $node->uuid = $uuid;
+        // Save for consistency.
+        node_save($node);
+        $loaded_nodes++;
+      }
+    }
+
+    $options[$uuid] = t('@type: @title', array(
+      '@type' => $types[$row->type],
+      '@title' => $row->title,
     ));
   }
 
