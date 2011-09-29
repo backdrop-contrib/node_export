@@ -139,7 +139,7 @@ function node_export_access_import($node = NULL) {
     // Check basic role permissions first.
     $access = user_access('use PHP to import nodes');
 
-    if ($node && $access) {
+    if (!is_null($node) && $access) {
       // Check node conditions.
       $access = node_access('create', $node->type);
     }
