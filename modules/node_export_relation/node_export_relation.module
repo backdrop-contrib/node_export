@@ -15,6 +15,14 @@ function node_export_relation_form_node_export_settings_alter(&$form, &$form_sta
     module_load_include('inc', 'node_export_relation', 'node_export_relation.node_reference');
     node_export_relation_settings_form_node_reference($form, $form_state);
   }
+  /*
+  // None of the settings are supported yet.
+
+  if (module_exists('og')) {
+    module_load_include('inc', 'node_export_relation', 'node_export_relation.og');
+    node_export_relation_settings_form_og($form, $form_state);
+  }
+  */
 }
 
 /**
@@ -51,6 +59,17 @@ function node_export_relation_node_export_alter(&$nodes, $op) {
        // to wait for node to be saved.
        node_export_relation_node_reference_update($nodes);
      }
+  }
+  if (module_exists('og')) {
+     module_load_include('inc', 'node_export_relation', 'node_export_relation.og');
+    if ($op == 'export') {
+      // Go through nodes and set UUIDs for their groups.
+      node_export_relation_og_set_group_uuids($nodes);
+    }
+    elseif ($op == 'import') {
+      // Now go through the groupes and switch back the UUIDS to actual ids.
+      node_export_relation_og_set_group_nids($nodes);
+    }
   }
 }
 

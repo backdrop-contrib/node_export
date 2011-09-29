@@ -8,7 +8,7 @@
  */
 
 /**
- * Implementation of_form_FORM_ID_alter().
+ * Callback for node reference settings form.
  */
 function node_export_relation_settings_form_node_reference(&$form, &$form_state) {
   $form['node_reference'] = array(
