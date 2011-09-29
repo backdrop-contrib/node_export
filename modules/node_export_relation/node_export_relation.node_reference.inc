@@ -88,7 +88,7 @@ function node_export_relation_node_reference_load(&$nodes, $nid) {
                 // Recursively load references of new nodes
                 node_export_relation_node_reference_load($nodes, $new_node->nid);
               }
-              else {
+              elseif (!variable_get('node_export_node_reference_skip', TRUE)) {
                 // Set this node to FALSE to trigger an error in node export.
                 // Do not use $new_node in this code in case there is a problem with it.
                 $nodes[$node_reference['nid']] = FALSE;
