@@ -1,5 +1,5 @@
 name = Node export relation
-description = Helps maintain relationships between nodes (e.g. Node reference) during Node export operations.
+description = Helps maintain relationships between nodes.  Supports node references and organic groups.
 dependencies[] = node_export
 core = 7.x
 package = "Node export"

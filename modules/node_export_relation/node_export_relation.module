@@ -15,12 +15,21 @@ function node_export_relation_form_node_export_settings_alter(&$form, &$form_sta
     module_load_include('inc', 'node_export_relation', 'node_export_relation.node_reference');
     node_export_relation_settings_form_node_reference($form, $form_state, $form_id);
   }
+  /*
+  // None of the settings are supported yet.
+
+  if (module_exists('og')) {
+    module_load_include('inc', 'node_export_relation', 'node_export_relation.og');
+    node_export_relation_settings_form_og($form, $form_state, $form_id);
+  }
+  */
 }
 
 /**
  * Implements hook_node_export_alter().
  */
 function node_export_relation_node_export_alter(&$nodes, $format) {
+
   if (module_exists('node_reference')) {
     module_load_include('inc', 'node_export_relation', 'node_export_relation.node_reference');
     $keyed_nodes = array();
@@ -33,17 +42,31 @@ function node_export_relation_node_export_alter(&$nodes, $format) {
     }
     $nodes = array_values($keyed_nodes);
   }
+
+  if (module_exists('og')) {
+    module_load_include('inc', 'node_export_relation', 'node_export_relation.og');
+    // Go through nodes and set UUIDs for their groups.
+    node_export_relation_og_set_group_uuids($nodes);
+  }
+
 }
 
 /**
  * Implements hook_node_export_import_alter().
  */
 function node_export_relation_node_export_import_alter(&$nodes, $format) {
+
   if (module_exists('node_reference')) {
     module_load_include('inc', 'node_export_relation', 'node_export_relation.node_reference');
     foreach ($nodes as $node) {
       node_export_relation_node_reference_map($node->nid, $node->uuid);
     }
+  }
+
+  if (module_exists('og')) {
+    module_load_include('inc', 'node_export_relation', 'node_export_relation.og');
+    // Now go through the groupes and switch back the UUIDS to actual ids.
+    node_export_relation_og_set_group_nids($nodes);
   }
 }
 
@@ -51,6 +74,7 @@ function node_export_relation_node_export_import_alter(&$nodes, $format) {
  * Implements hook_node_export_after_import_alter().
  */
 function node_export_relation_node_export_after_import_alter(&$nodes, $format) {
+
   if (module_exists('node_reference')) {
     module_load_include('inc', 'node_export_relation', 'node_export_relation.node_reference');
     // Now that all nodes are imported/updated we can restore the node referenced from UUIDS
@@ -58,5 +82,6 @@ function node_export_relation_node_export_after_import_alter(&$nodes, $format) {
     // to wait for node to be saved.
     node_export_relation_node_reference_update($nodes);
   }
+
 }
 
