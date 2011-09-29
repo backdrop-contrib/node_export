@@ -1,6 +1,38 @@
 <?php
 
 /**
+ * @file
+ * The Node export relation node reference include.
+ *
+ * Helps maintain node reference relationships between nodes during node export operations.
+ */
+
+/**
+ * Implementation of_form_FORM_ID_alter().
+ */
+function node_export_relation_settings_form_node_reference(&$form, &$form_state) {
+  $form['node_reference'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Node references'),
+  );
+  /*
+  // Not supported yet.
+
+  $form['node_reference']['node_export_node_reference_auto_inc'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Automatically include referenced nodes in exports'),
+    '#default' => variable_get('node_export_node_reference_auto_inc', TRUE),
+  );
+  */
+  $form['node_reference']['node_export_node_reference_skip'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Skip referenced nodes that cannot be exported'),
+    '#default' => variable_get('node_export_node_reference_skip', TRUE),
+    '#description' => t('If this is disabled, node exports will fail if a referenced node cannot be exported, for example if the user performing the export does not have access.'),
+  );
+}
+
+/**
  * Update node references after import.
  */
 function node_export_relation_node_reference_update($nodes) {

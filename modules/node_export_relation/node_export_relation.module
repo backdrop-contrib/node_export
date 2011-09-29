@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * The Node export relation module.
+ *
+ * Helps maintain relationships between nodes during node export operations.
+ */
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function node_export_relation_form_node_export_settings_alter(&$form, &$form_state) {

@@ -8,7 +8,7 @@
 /**
  * Implementation of hook_uninstall().
  */
-function node_export_uninstall() {
-  variable_del('node_export_format');
-  variable_del('node_export_code');
+function node_export_relation_uninstall() {
+  variable_del('node_export_node_reference_auto_inc');
+  variable_del('node_export_node_reference_skip');
 }
