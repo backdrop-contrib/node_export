@@ -8,20 +8,6 @@
  */
 
 /**
- * Implements hook_help().
- */
-function node_export_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#node_export':
-      $output = '<p>' . t('The Node export module allows users to export an existing node and then import it into another Drupal installation.') . '</p>';
-      $output .= '<p>' . t('Users with the "export nodes" permission can utilize this functionality. A new tab will appear on node pages with the words "Node export".') . '</p>';
-      $output .= '<p>' . t('It is also possible to do bulk exports, via Content admin (admin/content) or using "Views Bulk Operations".') . '</p>';
-      $output .= '<p>' . t('Importing nodes is done via the Add content page and can be used by those with the "Use PHP to import nodes" permission.') . '</p>';
-      return $output;
-  }
-}
-
-/**
  * Implements hook_permission().
  */
 function node_export_permission() {
