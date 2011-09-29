@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * The Node export relation install file.
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function node_export_uninstall() {
+  variable_del('node_export_format');
+  variable_del('node_export_code');
+}
