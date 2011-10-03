@@ -323,6 +323,8 @@ function node_export_nodes_to_nids($nodes) {
  *   An array of node ids that are being exported.
  * @param $code_string
  *   The Node export code.
+ * @param $format
+ *   The Node export format.
  *
  * @return
  *   The built form array.
