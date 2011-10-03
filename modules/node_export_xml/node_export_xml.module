@@ -17,6 +17,12 @@ function node_export_xml_node_export_format_handlers() {
     'xml' => array(
       '#title' => t('XML'),
       '#module' => 'node_export_xml',
+      '#description' => t(
+        '<a href="!xml">XML 1.0</a> representation which is good for machine-readability and human-readability.', 
+        array(
+          '!xml' => 'http://en.wikipedia.org/wiki/XML', 
+        )
+      ),
     ),
   );
 }

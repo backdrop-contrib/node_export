@@ -18,6 +18,12 @@ function node_export_node_export_format_handlers() {
     'node_code' => array(
       '#title' => t('Node code'),
       '#module' => 'node_export',
+      '#description' => t(
+        'PHP parsable export code, which is a custom version of <a href="!php">var_export</a>.',
+        array(
+          '!php' => 'http://www.php.net/manual/en/function.var-export.php', 
+        )
+      ),
     ),
   );
 }
