@@ -18,6 +18,7 @@ function node_export_token_values($type, $object = NULL, $options = array()) {
     $tokens['nid-list']      = $object['list'];
     $tokens['node-count']    = $object['count'];
     $tokens['timestamp']     = $object['time'];
+    $tokens['format']        = $object['format'];
     return $tokens;
   }
 }
@@ -33,6 +34,8 @@ function node_export_token_list($type = 'all') {
       = t("The number of nodes exported.");
     $tokens['Node export filename']['timestamp']
       = t("The timestamp when the file was generated.");
+    $tokens['Node export filename']['format']
+      = t("The format used to export.");
     return $tokens;
   }
 }
@@ -40,20 +43,20 @@ function node_export_token_list($type = 'all') {
 /**
  * Handles the bits of the form that are specific to the token module.
  */
-function node_export_settings_token_bits(&$form, $key, $group = 'basic') {
+function node_export_settings_token_bits(&$form, $key) {
   if (module_exists('token')) {
-    $form[$group][$key .'_token_help'] = array(
+    $form[$key .'_token_help'] = array(
       '#title' => t('Replacement patterns'),
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form[$group][$key .'_token_help']['help'] = array(
+    $form[$key .'_token_help']['help'] = array(
       '#value' => theme('token_help', 'Node export filename'),
     );
   }
   else {
-    $form[$group][$key]['#description'] = t(
+    $form[$key]['#description'] = t(
       'Get the <a href="@token">token</a> module for more options.',
       array('@token' => url('http://www.drupal.org/project/token'))
     );
@@ -110,20 +113,28 @@ function node_export_settings() {
     ),
     '#default_value' => variable_get('node_export_code', 'all'),
   );
-  $form['basic']['node_export_filename'] = array(
+
+  $form['basic']['filename'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Filename settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['basic']['filename']['node_export_filename'] = array(
     '#type' => 'textfield',
     '#title' => t('Filename pattern'),
-    '#default_value' => variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export'),
+    '#default_value' => variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].[format]'),
     '#size' => 120,
   );
-  node_export_settings_token_bits($form, 'node_export_filename');
-  $form['basic']['node_export_file_list'] = array(
+  node_export_settings_token_bits($form['basic']['filename'], 'node_export_filename');
+  $form['basic']['filename']['node_export_file_list'] = array(
     '#type' => 'textfield',
-    '#title' => t('Nid list limit max'),
+    '#title' => t('Node ID list max'),
     '#default_value' => variable_get('node_export_file_list', 10),
     '#size' => 6,
     '#maxlength' => 30,
-    '#description' => t('If there are more than this many nodes, the list of node ids for the filename will not be built.'),
+    '#description' => t('If there are more than this many nodes, the [nid-list] token for the filename will not be built.  This is to prevent very long filenames.'),
   );
 
   $form['publishing'] = array(
@@ -200,12 +211,14 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
       return;
     }
     $nids = node_export_nodes_to_nids($nodes);
+    $format = $result['format'];
   }
   elseif (!empty($_SESSION['node_export'])) {
     // Nids and code string supplied from session.
     $session_data = array_shift($_SESSION['node_export']);
     $code_string = $session_data['code_string'];
     $nids = $session_data['nids'];
+    $format = $session_data['format'];
   }
 
   $delivery = $delivery ? $delivery : variable_get('node_export_code', 'all');
@@ -213,7 +226,7 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
     if (is_object($nodes)) {
       // Single node, output straight away.
       drupal_set_title(t('Node export of !title', array('!title' => check_plain($nodes->title))));
-      return drupal_get_form('node_export_form', $nids, $code_string);
+      return drupal_get_form('node_export_form', $nids, $code_string, $format);
     }
     elseif ($nodes) {
       // Node operation, add to session and redirect.
@@ -225,12 +238,12 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
     }
     elseif (!$nodes) {
       // No $nodes passed, but $code_string came from session.
-      return drupal_get_form('node_export_form', $nids, $code_string);
+      return drupal_get_form('node_export_form', $nids, $code_string, $format);
     }
   }
   else {
     // Get file.
-    node_export_get_file($nids, $code_string);
+    node_export_get_file($nids, $code_string, $format);
   }
 }
 
@@ -264,13 +277,19 @@ function node_export_nodes_to_nids($nodes) {
  *    An array of node ids that are being exported.
  *  @param $code_string
  *    The Node export code.
+ *  @param $format
+ *    The Node export format.
  */
-function node_export_form($form_state, $nids, $code_string) {
+function node_export_form($form_state, $nids, $code_string, $format) {
   $form = array();
   if (variable_get('node_export_code', 'all') == 'all') {
     $form['nids'] = array(
       '#type' => 'hidden',
       '#value' => implode(', ', $nids),
+    );
+    $form['format'] = array(
+      '#type' => 'hidden',
+      '#value' => $format,
     );
     $form['download_file'] = array(
       '#type' => 'submit',
@@ -299,8 +318,9 @@ function node_export_form_submit($form, &$form_state) {
   // Get file.
   $nids = explode(', ', $form_state['values']['nids']);
   $code_string = $form_state['values']['export'];
+  $format = $form_state['values']['format'];
 
-  node_export_get_file($nids, $code_string);
+  node_export_get_file($nids, $code_string, $format);
 }
 
 /**
@@ -310,17 +330,20 @@ function node_export_form_submit($form, &$form_state) {
  *   An array of node ids.
  * @param $code_string
  *   The text output.
+ * @param $format
+ *   The format used.
  */
-function node_export_get_file($nids, $code_string) {
+function node_export_get_file($nids, $code_string, $format = NULL) {
   $filename_data = array();
   $filename_data['count'] = count($nids);
   $filename_data['time'] = time();
+  $filename_data['format'] = $format ? $format : 'export';
 
   // Add a list of nids
   if (count($nids) <= variable_get('node_export_file_list', 10)) {
     $filename_data['list'] = '['. implode(',', $nids) .']';
   }
-  $name = variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].export');
+  $name = variable_get('node_export_filename', 'node-export[nid-list]([node-count]-nodes).[timestamp].[format]');
   if (module_exists('token')) {
     $name = token_replace($name, 'Node export filename', $filename_data, '[', ']');
   }
@@ -329,6 +352,7 @@ function node_export_get_file($nids, $code_string) {
     $name = str_replace('[nid-list]', $filename_data['list'], $name);
     $name = str_replace('[node-count]', $filename_data['count'], $name);
     $name = str_replace('[timestamp]', $filename_data['time'], $name);
+    $name = str_replace('[format]', $filename_data['format'], $name);
   }
   header('Content-type: text/plain');
   header('Content-Disposition: attachment; filename="'. $name .'"');
