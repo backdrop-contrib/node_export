@@ -138,6 +138,11 @@ function node_export_relation_node_reference_fields($content_type_name) {
     }
   }
 
-  return $nodereference_fields[$content_type_name];
+  if (array_key_exists($content_type_name, $node_reference_fields)) {
+    return $node_reference_fields[$content_type_name];
+  }
+  else {
+    return NULL;
+  }
 }
 
