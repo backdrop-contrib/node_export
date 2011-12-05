@@ -714,9 +714,12 @@ function node_export_node_clone($original_node) {
     if (variable_get('node_export_reset_path_' . $node->type, TRUE)) {
       $node->path = NULL;
     }
-    elseif (module_exists('pathauto')) {
-      // Prevent pathauto from creating a new path alias.
-      $node->path['pathauto'] = FALSE;
+    else {
+      unset($node->path['pid']);
+      if (module_exists('pathauto')) {
+        // Prevent pathauto from creating a new path alias.
+        $node->path['pathauto'] = FALSE;
+      }
     }
 
     if (variable_get('node_export_reset_book_mlid_' . $node->type, TRUE) && isset($node->book['mlid'])) {
