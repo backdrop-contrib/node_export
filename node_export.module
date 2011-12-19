@@ -212,7 +212,7 @@ function node_export_node_operations() {
           $operations['node_export_'. $format_handler] = array(
             'label' => t('Node export') ." (". $format['#title'] .")",
             'callback' => 'node_export_bulk_operation',
-            'callback arguments' => array($format_handler),
+            'callback arguments' => array($format_handler, NULL),
           );
         }
       }
@@ -222,7 +222,7 @@ function node_export_node_operations() {
         'node_export' => array(
           'label' => t('Node export'),
           'callback' => 'node_export_bulk_operation',
-          'callback arguments' => array(NULL),
+          'callback arguments' => array(NULL, NULL),
         ),
       );
     }
