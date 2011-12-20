@@ -27,6 +27,20 @@ function node_export_csv_node_export_format_handlers() {
 }
 
 /**
+ * Implements hook_module_implements_alter().
+ */
+function node_export_csv_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'node_export_import') {
+    // Move node_export_csv_node_export_import() to the end of the list.=
+    // Node export CSV is slow to fire on imports, so this allows other
+    // modules to respond first.
+    $group = $implementations['node_export_csv'];
+    unset($implementations['node_export_csv']);
+    $implementations['node_export_csv'] = $group;
+  }
+}
+
+/**
  * Implements hook_node_export().
  */
 function node_export_csv_node_export($nodes, $format) {
