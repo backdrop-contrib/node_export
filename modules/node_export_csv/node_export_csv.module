@@ -9,8 +9,6 @@
 
 /**
  * Implements hook_node_export_format_handlers().
- *
- * @see hook_node_export_format_handlers()
  */
 function node_export_csv_node_export_format_handlers() {
   return array(
@@ -18,9 +16,9 @@ function node_export_csv_node_export_format_handlers() {
       '#title' => t('CSV'),
       '#module' => 'node_export_csv',
       '#description' => t(
-        '<a href="!doc">RFC4180</a> compliant <a href="!csv">CSV</a> code.  Values are comma-seperated, records are CRLF delimited, and string values are single-quoted.', 
+        '<a href="!doc">RFC4180</a> compliant <a href="!csv">CSV</a> code.  Values are comma-seperated, and records are CRLF delimited.',
         array(
-          '!doc' => 'http://tools.ietf.org/html/rfc4180', 
+          '!doc' => 'http://tools.ietf.org/html/rfc4180',
           '!csv' => 'http://en.wikipedia.org/wiki/Comma-separated_values'
         )
       ),
@@ -30,8 +28,6 @@ function node_export_csv_node_export_format_handlers() {
 
 /**
  * Implements hook_node_export().
- *
- * @see hook_node_export()
  */
 function node_export_csv_node_export($nodes, $format) {
   return node_export_csv_encode($nodes);
@@ -41,29 +37,23 @@ function node_export_csv_node_export($nodes, $format) {
  * Build CSV string.
  */
 function node_export_csv_encode($nodes) {
-  $header = array();
   $encoded_nodes = array();
-
   $csv_lines = array();
 
-  foreach ($nodes as $node_key => &$node) {
-    $encoded_nodes[$node_key] = array();
-    node_export_csv_encode_node($header, $encoded_nodes, $node_key, $node);
+  $node_keys = array();
+  foreach (array_keys($nodes) as $node_key) {
+    $new_node_key = 'node_' . $node_key;
+    $node_keys[] = $new_node_key;
+    node_export_csv_encode_node($encoded_nodes, $new_node_key, $nodes[$node_key]);
   }
 
-  $csv_lines[0] = $header;
+  $csv_lines['node_export_csv_header'] = array_keys($encoded_nodes);
 
-  foreach ($encoded_nodes as $encoded_node_key => &$encoded_node) {
-    $csv_line = array();
-    $line = $encoded_node_key + 1;
-    foreach ($header as $header_key => $header_value) {
-      $value = '';
-      if (isset($encoded_node[$header_value])) {
-        $value = $encoded_node[$header_value];
-      }
-      $csv_line[] = $value;
+  foreach (array_keys($encoded_nodes) as $header_value) {
+    $encoded_nodes[$header_value] = array_merge(array_fill_keys($node_keys, NULL), $encoded_nodes[$header_value]);
+    foreach (array_keys($encoded_nodes[$header_value]) as $encoded_node_key) {
+      $csv_lines[$encoded_node_key][$header_value] = $encoded_nodes[$header_value][$encoded_node_key];
     }
-    $csv_lines[$line] = $csv_line;
   }
 
   return node_export_csv_array_to_csv($csv_lines);
@@ -72,33 +62,26 @@ function node_export_csv_encode($nodes) {
 /**
  * Process a node and update $header and $encoded_nodes accordingly.
  */
-function node_export_csv_encode_node(&$header, &$encoded_nodes, $node_key, $var, $parents = NULL) {
-  static $last_header = NULL;
+function node_export_csv_encode_node(&$encoded_nodes, $node_key, $var, $parent = NULL) {
 
   foreach ($var as $k => &$v) {
 
     // Get the new header value.
-    $header_value = node_export_csv_encode_header_value($parents, $var, $k);
+    $header_value = node_export_csv_encode_header_value($parent, $var, $k);
 
     if (is_object($v) || is_array($v)) {
       // Recurse through the structure.
-      node_export_csv_encode_node($header, $encoded_nodes, $node_key, $v, $header_value);
+      node_export_csv_encode_node($encoded_nodes, $node_key, $v, $header_value);
     }
     else {
-      // Insert $header_value into the header.
-      $position = node_export_csv_encode_array_insert_after($header, $header_value, $last_header);
-
       // Create a safe text version of this value and store it against the header using a safe key.
-      $encoded_nodes[$node_key][$header_value] = node_export_csv_encode_sanitize_value($v);
-
-      // Update $last_header for the next iteration.
-      $last_header = $header_value;
+      $encoded_nodes[$header_value][$node_key] = node_export_csv_encode_sanitize_value($v);
     }
   }
 }
 
 /**
- * Create header value from $parents, $var, and $k.
+ * Encode a value.
  */
 function node_export_csv_encode_sanitize_value($var) {
     if (is_numeric($var)) {
@@ -111,13 +94,32 @@ function node_export_csv_encode_sanitize_value($var) {
       return 'NULL';
     }
     elseif (is_string($var)) {
-      //return '"'. $var .'"';
-      return "'" . strtr($var, array("'" => "\\'")) . "'";
+      // Single-quote strings that could be confused for null or boolean.
+      if (in_array(strtoupper($var), array('TRUE', 'FALSE', 'NULL'))) {
+        $var = "'" . $var . "'";
+      }
+
+      return $var;
     }
     else {
       return '';
     }
+}
 
+/**
+ * Decode a value.
+ */
+function node_export_csv_decode_sanitize_value($var) {
+  // Allow numeric, bool, and null values to pass right back as is.
+  if (is_numeric($var) || is_bool($var) || is_null($var)) {
+    return $var;
+  }
+  // Allow the special case strings back as is.
+  elseif (in_array(strtoupper($var), array("'TRUE'", "'FALSE'", "'NULL'"))) {
+    return $var;
+  }
+  // Assume this is a string.
+  return "'" . $var . "'";
 }
 
 /**
@@ -139,6 +141,8 @@ function node_export_csv_encode_header_value($parents, $var, $k) {
 
 /**
  * Insert $new after $before in $array if not exists, and return the position.
+ *
+ * Deprecated?
  */
 function node_export_csv_encode_array_insert_after(&$array, $new, $before) {
   $position = array_search($new, $array);
@@ -158,6 +162,8 @@ function node_export_csv_encode_array_insert_after(&$array, $new, $before) {
 
 /**
  * Insert $new at $position in $array.
+ *
+ * Deprecated?
  */
 function node_export_csv_encode_array_insert_at(&$array, $new, $position) {
   $prefix = array_slice($array, 0, $position);
@@ -187,6 +193,7 @@ function node_export_csv_node_export_import($code_string) {
     foreach ($array as &$row) {
       $node = (object)array();
       foreach ($row as $key => $item) {
+        $item = node_export_csv_decode_sanitize_value($item);
         eval('$node->' . $header[$key] . ' = ' . $item . ';');
       }
       $nodes[] = $node;
