@@ -30,7 +30,7 @@ class FeedsNodeExportProcessor extends FeedsNodeProcessor {
       return new FeedsParserResult(array());
     }
 
-    parent::process();
+    parent::process($source, $parser_result);
   }
 
   /**
