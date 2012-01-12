@@ -53,7 +53,7 @@ function node_export_file_node_export_node_import_alter(&$node, $original_node) 
  * FileField field filter callback used in node_export_file_alter_filefield().
  */
 function node_export_file_filefield_filter($attribute, $field) {
-  return (substr($attribute, 0, 6) == 'field_' && is_array($field));
+  return is_array($field);
 }
 
 /**
