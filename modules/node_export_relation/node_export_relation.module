@@ -80,7 +80,7 @@ function node_export_relation_node_export_import_alter(&$nodes, $format) {
 
   if (module_exists('taxonomy')) {
     module_load_include('inc', 'node_export_relation', 'node_export_relation.taxonomy');
-    foreach ($nodes as $node) [
+    foreach ($nodes as $node) {
       node_export_relation_taxonomy_restore_term_reference($node);
     }
   }
