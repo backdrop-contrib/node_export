@@ -301,7 +301,7 @@ function node_export_form($form_state, $nids, $code_string, $format) {
     '#title' => t('Node export code'),
     '#default_value' => $code_string,
     '#rows' => 30,
-    '#description' => t('Copy this code and then on the site you want to import to, go to the <em>Node export: import</em> link under <em>Content management</em>, and paste it in there.'),
+    '#description' => t('Copy this code and then on the site you want to import to, go to the <em>Node export: import</em> link under <em>Create content</em>, and paste it in there.'),
     '#attributes' => array(
       'wrap' => 'off',
     ),
