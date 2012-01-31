@@ -124,15 +124,15 @@ function node_export_relation_node_reference_map($id, $uuid = NULL, $type = 'nod
  */
 function node_export_relation_node_reference_fields($content_type_name) {
   // cache result
-  static $nodereference_fields = array();
+  static $node_reference_fields = array();
 
-  if (empty($nodereference_fields[$content_type_name])) {
+  if (empty($node_reference_fields[$content_type_name])) {
     $ct = content_types($content_type_name);
     $fields = $ct['fields'];
     if (!empty($fields)) {
       foreach ($fields as $name => $field) {
         if ($field['type'] == 'nodereference') {
-          $nodereference_fields[$content_type_name][$name] = $name;
+          $node_reference_fields[$content_type_name][$name] = $name;
         }
       }
     }
