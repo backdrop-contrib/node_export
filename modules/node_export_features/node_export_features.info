@@ -3,5 +3,6 @@ description = Adds Features support to Node export
 dependencies[] = node_export
 dependencies[] = uuid
 dependencies[] = features
+dependencies[] = uuid
 core = 6.x
 package = "Node export"

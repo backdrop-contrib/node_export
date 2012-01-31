@@ -1,5 +1,6 @@
 name = Node export relation
 description = Helps maintain relationships between nodes.  Supports node references and organic groups.
 dependencies[] = node_export
+dependencies[] = uuid
 core = 6.x
 package = "Node export"
