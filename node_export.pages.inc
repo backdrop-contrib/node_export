@@ -167,6 +167,7 @@ function node_export_settings() {
     '#title' => t('Filename pattern'),
     '#default_value' => variable_get('node_export_filename', 'node-export[node_export_filename:nid-list]([node_export_filename:node-count]-nodes).[node_export_filename:timestamp].[node_export_filename:format]'),
     '#rows' => 1,
+    '#wysiwyg' => FALSE,
   );
   node_export_settings_token_bits($form['basic']['filename'], 'node_export_filename');
 
@@ -452,7 +453,8 @@ function node_export_import_form($form, &$form_state) {
     '#type' => 'textarea',
     '#default_value' => '',
     '#rows' => 30,
-    '#description' => t('Cut and paste the code of an exported node here.'),
+    '#description' => t('Paste the code of a node export here.'),
+    '#wysiwyg' => FALSE,
   );
 
   $form['actions'] = array('#type' => 'actions');
