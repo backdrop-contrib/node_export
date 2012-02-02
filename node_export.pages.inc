@@ -354,6 +354,7 @@ function node_export_form($form, &$form_state, $nids, $code_string, $format) {
     '#attributes' => array(
       'wrap' => 'off',
     ),
+    '#wysiwyg' => FALSE,
   );
   return $form;
 }
