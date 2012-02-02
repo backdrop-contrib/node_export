@@ -404,6 +404,7 @@ function node_export_import_form($form_state) {
     '#default_value' => '',
     '#rows' => 30,
     '#description' => t('Cut and paste the code of an exported node here.'),
+    '#wysiwyg' => FALSE,
   );
   $form['#redirect'] = FALSE;
   $form['submit'] = array(
