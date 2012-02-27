@@ -230,9 +230,6 @@ function node_export_csv_array_to_csv($array, $seperator = ',', $enclosure = '"'
       ) {
         $item = $enclosure . $item . $enclosure;
       }
-      if ($item === '') {
-        $item = $enclosure . $enclosure;
-      }
       $out_item[] = $item;
     }
     $lines[] = implode($seperator, $out_item);
@@ -282,6 +279,9 @@ function node_export_csv_csv_to_array($string, $seperator = ',', $enclosure = '"
         $out_item[$position] .= $c;
       }
       else {
+        if ($string[$i - 1] == $seperator) {
+          $out_item[$position] .= '';
+        }
         $position++;
         $escape = FALSE;
         $double_escape = FALSE;
