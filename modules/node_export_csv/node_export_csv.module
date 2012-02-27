@@ -116,7 +116,7 @@ function node_export_csv_encode_sanitize_value($var) {
       return $var;
     }
     else {
-      return '""';
+      return '';
     }
 }
 
@@ -234,6 +234,9 @@ function node_export_csv_array_to_csv($array, $seperator = ',', $enclosure = '"'
         || (stripos($item, $eol) !== FALSE)
       ) {
         $item = $enclosure . $item . $enclosure;
+      }
+      if ($item === '') {
+        $item = $enclosure . $enclosure;
       }
       $out_item[] = $item;
     }
