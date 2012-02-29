@@ -132,7 +132,7 @@ function node_export_csv_decode_sanitize_value($var) {
     return $var;
   }
   // Assume this is a string.
-  return "'" . $var . "'";
+  return "'" . str_replace("'", "\'", $var) . "'";
 }
 
 /**
