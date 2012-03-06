@@ -699,7 +699,7 @@ function node_export_node_clone($original_node) {
 
     $node->nid = NULL;
     $node->vid = NULL;
-    $node->name = $user->name;
+    $node->name = !empty($user->name) ? $user->name : (!empty($user->uid) ? NULL : variable_get('anonymous', t('Anonymous')));
     $node->uid = $user->uid;
 
     if (variable_get('node_export_reset_created_' . $node->type, TRUE)) {
