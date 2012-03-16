@@ -11,7 +11,10 @@
  * @todo
  *  Why is this weighting required, and how can we replace it with
  *  hook_module_implements_alter() ?
+ * -- I don't think it's used because the only hooks invoked by node_export_file
+ * are hooks from node_export, nothing CCK modules would call?
  */
+/*
 function node_export_file_install() {
   // Weight the module light to ensure it runs before all CCK modules
   db_update('system')
@@ -19,19 +22,13 @@ function node_export_file_install() {
     ->condition('name', 'node_export_file')
     ->execute();
 }
+*/
 
 /**
  * Implementation of hook_uninstall().
  */
 function node_export_file_uninstall() {
   variable_del('node_export_file_types');
-}
-
-/**
- * Remove settings for file mode and file assets path.
- */
-function node_export_file_update_7300() {
   variable_del('node_export_file_mode');
   variable_del('node_export_file_assets_path');
-  return 'Remove settings for file mode and file assets path.';
 }

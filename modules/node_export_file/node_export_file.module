@@ -26,6 +26,45 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#options' => $types,
     '#description' => t('Which content types should export file attachments and uploads?'),
   );
+
+  $textarea_delivery = $form['basic']['node_export_code']['#default_value'];
+
+  $mode_message_display = ($textarea_delivery != 'file');
+
+  $form['file']['node_export_file_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('File export mode'),
+    '#default_value' => variable_get('node_export_file_mode', 'inline'),
+    '#options' => array(
+      'inline' => t('Inline Base64'), 
+      'local' => t('Local file export'), 
+      'remote' => t('Remote file export, URL')
+     ),
+    '#description' => t('Should file exports be inline inside the export code, a local path to the file, or a URL?  Inline Base64 is the easiest option to use but can sometimes exceed PHP post limits, local and remote modes are more useful for power users.  <em>NOTE: Remote mode only works with a public files directory.</em>'),
+  );
+
+  $form['file']['node_export_file_assets_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Export FileField assets path'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#default_value' => variable_get('node_export_file_assets_path', ''),
+    '#description' => t(
+      'Optionally, copy file uploads to this path when the node is exported.
+      The primary advantage of this is to divert exported files into a
+      safe location so they can be commmitted to source control (eg: Subversion,
+      CVS, git).  <em>Tip: For install profile developers, setting this
+      path to <code>profiles/my_profile/node_export_assets</code> may be
+      useful.</em>'
+    ),
+    '#required' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name=node_export_file_mode]' => array('value' => 'local'),
+      ),
+    ),
+  );
+
 }
 
 /**
@@ -142,7 +181,25 @@ function node_export_file_image_filter($attribute, $field) {
  * Abstract hook_node_export_node_alter() used by filefield, upload, and image.
  */
 function node_export_file_alter_filefield(&$node, $original_node, $op, $attribute_filter_callback) {
-  $export_var = 'node_export_file_data';
+  $assets_path = variable_get('node_export_file_assets_path', '');
+  $export_mode = variable_get('node_export_file_mode', 'inline');
+
+  switch ($export_mode) {
+    case 'local':
+      $export_var = 'node_export_file_path'; break;
+    case 'remote':
+      $export_var = 'node_export_file_url';  break;
+    default:
+    case 'inline':
+      $export_var = 'node_export_file_data'; break;
+  }
+
+  if ($op == 'export') {
+    if (node_export_file_check_assets_path($export_mode, $assets_path) === FALSE) {
+      // Don't continue if the assets path is not ready
+      return;
+    }
+  }
 
   foreach ($node as $attr => $value) {
     $field = &$node->$attr;
@@ -166,7 +223,7 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
           continue;
         }
 
-        $export_data = base64_encode(file_get_contents($file->uri));
+        $export_data = node_export_file_get_export_data($file, $export_mode, $assets_path);
 
         if (is_object($field[$node->language][$i])) {
           $field[$node->language][$i]->{$export_var} = $export_data;
@@ -200,6 +257,40 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
 }
 
 /**
+ * Ensure the assets path is exists and is writeable.
+ *
+ * @param $export_mode
+ *   The files export mode, 'local' or 'remote'
+ * @param $assets_path
+ *   The assets path, should be empty ('') if assets are not supposed to
+ *   be copied.
+ * @return TRUE or FALSE or NULL
+ *   TRUE  if the assets path is ready, and files should be copied there
+ *   FALSE if the assets path is not ready, and files should be copied there
+ *   NULL  if files shouldn't be copied to the assets path
+ */
+function node_export_file_check_assets_path($export_mode, $assets_path) {
+  // If files are supposed to be copied to the assets path.
+  if ($export_mode == 'local' && $assets_path) {
+    // Ensure the assets path is created
+    if (!is_dir($assets_path) && mkdir($assets_path, 0777, TRUE) == FALSE) {
+      drupal_set_message(t("Could not create assets path! '!path'", array('!path' => $assets_path)), 'error');
+      return FALSE;
+    }
+
+    // Ensure it is writable
+    if (!is_writable($assets_path)) {
+      drupal_set_message(t("Assets path is not writable! '!path'", array('!path' => $assets_path)), 'error');
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  return NULL;
+}
+
+/**
  * Checks an array of files, removing any that are invalid.
  *
  * @return $files or FALSE
@@ -220,6 +311,42 @@ function node_export_file_check_files($original_files) {
   }
 
   return (count($files) > 0) ? $files : FALSE;
+}
+
+/**
+ * Handles the file copying parts and local/remote parts of the file export.
+ *
+ * @param $file
+ *   The file object to handle.
+ * @param $export_mode
+ *   The mode, 'inline' / 'local' / 'remote'
+ * @param $assets_path
+ *   Either empty ('') if files should not be copied to the assets path, or
+ *   the path to a writable directory.
+ */
+function node_export_file_get_export_data($file, $export_mode, $assets_path) {
+  if ($export_mode == 'local') {
+    if ($assets_path) {
+      $export_data = $assets_path . '/' . basename($file->uri);
+      if (!copy($file->uri, $export_data)) {
+        drupal_set_message(t("Export file error, could not copy '%filepath' to '%exportpath'.", array('%filepath' => $file->uri, '%exportpath' => $export_data)), 'error');
+        return FALSE;
+      }
+    }
+    else {
+      $export_data = $file->uri;
+    }
+  }
+  // Remote export mode
+  elseif ($export_mode == 'remote') {
+    $export_data = url($file->uri, array('absolute' => TRUE));
+  }
+  // Default is 'inline' export mode
+  else {
+    $export_data = base64_encode(file_get_contents($file->uri));
+  }
+
+  return $export_data;
 }
 
 /**
