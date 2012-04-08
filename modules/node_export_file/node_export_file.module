@@ -200,55 +200,54 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
       return;
     }
   }
+  
+  // get all fields from this node type
+  $fields = field_info_instances("node", $node->type);
+  foreach($fields as $field_instance) {
+    
+    // load field infos to check the type
+    $field = &$node->{$field_instance['field_name']};
+    $info = field_info_field($field_instance['field_name']);
+    
+    // check if this field should implement file import/export system
+    if (in_array($info['type'], array("image", "file"))) {
+      
+      // we need to loop into each language because i18n translation can build 
+      // fields with different language than the node one.
+      foreach($field as $language => $files) {
+        if (is_array($files)) {
+          foreach($files as $i => $file) {
+            
+            // convert file to array to stay into the default node_export_file format
+            $file = (object) $file;
+            
+            // When exporting a node ...
+            if ($op == 'export') {
+              
+              // Check the file
+              if (!isset($file->uri) || !is_file($file->uri)) {
+                drupal_set_message(t("File upload field found on node, but doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
+                continue;
+              }
 
-  foreach ($node as $attr => $value) {
-    $field = &$node->$attr;
-
-    // Filter this attribute by callback
-    if (!call_user_func_array($attribute_filter_callback, array('attribute' => $attr, 'field' => $field))) {
-      continue;
-    }
-
-    // Strip off anything that isn't a file, if no files are found skip to
-    // the next attribute
-    if (($files = node_export_file_check_files(array_key_exists($node->language, $field) ? $field[$node->language] : NULL)) == FALSE) {
-      continue;
-    }
-
-    foreach ($files as $i => $file) {
-      // When exporting a node ...
-      if ($op == 'export') {
-        if (!isset($file->uri) || !is_file($file->uri)) {
-          drupal_set_message(t("File upload field found on node, but doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
-          continue;
-        }
-
-        $export_data = node_export_file_get_export_data($file, $export_mode, $assets_path);
-
-        if (is_object($field[$node->language][$i])) {
-          $field[$node->language][$i]->{$export_var} = $export_data;
-          $field[$node->language][$i]->fid = NULL;
-          node_export_file_clean_local_file_path($field[$node->language][$i]->uri);
-        }
-        elseif (is_array($field[$node->language][$i])) {
-          $field[$node->language][$i][$export_var] = $export_data;
-          $field[$node->language][$i]['fid'] = NULL;
-          node_export_file_clean_local_file_path($field[$node->language][$i]['uri']);
-        }
-      }
-      // When importing a node ...
-      elseif ($op == 'import') {
-        $result = node_export_file_import_file($file);
-
-        // The file was saved successfully, update the file field (by reference)
-        if ($result == TRUE && isset($file->fid)) {
-          if (is_object($field[$node->language][$i])) {
-            $field[$node->language][$i]->fid = $file->fid;
-            $field[$node->language][$i]->uri = $file->uri;
-          }
-          elseif (is_array($field[$node->language][$i])) {
-            $field[$node->language][$i]['fid'] = $file->fid;
-            $field[$node->language][$i]['uri'] = $file->uri;
+              // export file
+              $export_data = node_export_file_get_export_data($file, $export_mode, $assets_path);
+              
+              // build the field again, and remove fid to be sure that imported node
+              // will rebuild the file again, or keep an existing one with a different fid
+              $field[$language][$i]['fid'] = NULL;
+              $field[$language][$i][$export_var] = $export_data;
+              node_export_file_clean_local_file_path($field[$language][$i]['uri']);
+            }
+            
+            // When importing a node ...
+            elseif ($op == 'import') {
+              $result = node_export_file_import_file($file);
+              // The file was saved successfully, update the file field (by reference)
+              if ($result == TRUE && isset($file->fid)) {
+                $field[$language][$i] = (array)$file;
+              }
+            }
           }
         }
       }
