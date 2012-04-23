@@ -140,7 +140,7 @@ function node_export_file_alter_image(&$node, $original_node, $op) {
     $result = db_query(
       "SELECT f.*
        FROM {image} AS i
-       INNER JOIN {files} AS f ON i.fid = f.fid
+       INNER JOIN {file_managed} AS f ON i.fid = f.fid
        WHERE i.nid = :nid AND f.filename = :filename",
       array(
         ':nid' => $original_node->nid,
