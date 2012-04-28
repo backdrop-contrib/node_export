@@ -113,12 +113,12 @@ function node_export_feeds_feeds_importer_default() {
 /**
  * Implementation of hook_feeds_after_import().
  */
-function node_export_feeds_feeds_after_import($importer, $source) {
-  if ($importer->importer->processor instanceOf FeedsNodeExportProcessor && !empty($importer->importer->processor->new_nodes)) {
+function node_export_feeds_feeds_after_import($source) {
+  if ($source->importer->processor instanceOf FeedsNodeExportProcessor && !empty($source->importer->processor->new_nodes)) {
     // This code is similar to some code in node_export_import()
     // which gets executed for all nodes when the $save param is TRUE.
     $save = TRUE;
-    drupal_alter('node_export_after_import', $importer->importer->processor->new_nodes, $importer->importer->parser->format, $save);
+    drupal_alter('node_export_after_import', $source->importer->processor->new_nodes, $source->importer->parser->format, $save);
     // @todo: Is this what we should do with output messages?
     drupal_set_message(("Some values may have been reset depending on Node export's configuration."));
 
