@@ -282,6 +282,10 @@ function node_export_nodes_to_nids($nodes) {
  */
 function node_export_form($form_state, $nids, $code_string, $format) {
   $form = array();
+  if (empty($nids)) {
+    drupal_set_message(t('No content selected.'), 'warning');
+    $nids = array();
+  }
   if (variable_get('node_export_code', 'all') == 'all') {
     $form['nids'] = array(
       '#type' => 'hidden',
