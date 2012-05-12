@@ -4,7 +4,7 @@
  * @file
  * The Node export file module.
  *
- * Export helper module for handling CCK FileFields, and Uploaded files.
+ * Export helper module for handling file fields.
  */
 
 define('NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION', '#FILES_DIRECTORY_PATH#');
@@ -24,7 +24,7 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#title' => t('Files exported for content types'),
     '#default_value' => variable_get('node_export_file_types', array()),
     '#options' => $types,
-    '#description' => t('Which content types should export file attachments and uploads?'),
+    '#description' => t('Which content types should export file fields?'),
   );
 
   $textarea_delivery = $form['basic']['node_export_code']['#default_value'];
@@ -50,7 +50,7 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#maxlength' => 255,
     '#default_value' => variable_get('node_export_file_assets_path', ''),
     '#description' => t(
-      'Optionally, copy file uploads to this path when the node is exported.
+      'Optionally, copy files to this path when the node is exported.
       The primary advantage of this is to divert exported files into a
       safe location so they can be commmitted to source control (eg: Subversion,
       CVS, git).  <em>Tip: For install profile developers, setting this
@@ -74,7 +74,6 @@ function node_export_file_node_export_node_alter(&$node, $original_node) {
   $types = array_filter(variable_get('node_export_file_types', array()));
   if (in_array($node->type, $types)) {
     node_export_file_alter_filefield($node, $original_node, 'export', 'node_export_file_filefield_filter');
-    node_export_file_alter_upload($node, $original_node, 'export');
   }
 }
 
@@ -83,7 +82,6 @@ function node_export_file_node_export_node_alter(&$node, $original_node) {
  */
 function node_export_file_node_export_node_import_alter(&$node, $original_node) {
   node_export_file_alter_filefield($node, $original_node, 'import', 'node_export_file_filefield_filter');
-  node_export_file_alter_upload($node, $original_node, 'import');
 }
 
 /**
@@ -94,33 +92,7 @@ function node_export_file_filefield_filter($attribute, $field) {
 }
 
 /**
- * Handles importing and exporting File Fields.
- */
-function node_export_file_alter_upload(&$node, $original_node, $op) {
-  if (isset($original_node->files) && count($original_node->files) > 0) {
-    // Re-attach files, node_export module strips them off
-    $node->files = $original_node->files;
-
-    if ($op == 'export') {
-      // Mark all file uploads as "new", this is required by the upload module
-      foreach ($node->files as $fid => $file) {
-        $node->files[$fid]->new = TRUE;
-      }
-    }
-
-    node_export_file_alter_filefield($node, $original_node, $op, 'node_export_file_upload_filter');
-  }
-}
-
-/**
- * Upload module field filter callback used in node_export_file_alter_filefield().
- */
-function node_export_file_upload_filter($attribute, $field) {
-  return ($attribute == 'files' && is_array($field));
-}
-
-/**
- * Abstract hook_node_export_node_alter() used by filefield, and upload.
+ * Abstract hook_node_export_node_alter() used by file fields.
  */
 function node_export_file_alter_filefield(&$node, $original_node, $op, $attribute_filter_callback) {
   $assets_path = variable_get('node_export_file_assets_path', '');
@@ -168,7 +140,7 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
 
               // Check the file
               if (!isset($file->uri) || !is_file($file->uri)) {
-                drupal_set_message(t("File upload field found on node, but doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
+                drupal_set_message(t("File field found on node, but file doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
                 continue;
               }
 

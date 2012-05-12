@@ -1,5 +1,5 @@
 name = Node export file
-description = "Export helper module for handling files (FileField, and Upload)."
+description = "Export helper module for handling file fields."
 dependencies[] = node_export
 core = 7.x
 package = "Node export"
