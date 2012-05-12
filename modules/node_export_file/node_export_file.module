@@ -7,15 +7,13 @@
  * Export helper module for handling file fields.
  */
 
-define('NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION', '#FILES_DIRECTORY_PATH#');
-
 /**
  * Implements hook_form_FORM_ID_alter().
  */
 function node_export_file_form_node_export_settings_alter(&$form, &$form_state, $form_id) {
   $form['file'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Export files'),
+    '#title' => t('File fields'),
   );
 
   $types = node_type_get_names();
@@ -73,70 +71,58 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
 function node_export_file_node_export_node_alter(&$node, $original_node) {
   $types = array_filter(variable_get('node_export_file_types', array()));
   if (in_array($node->type, $types)) {
-    node_export_file_alter_filefield($node, $original_node, 'export', 'node_export_file_filefield_filter');
-  }
-}
+    $assets_path = variable_get('node_export_file_assets_path', '');
+    $export_mode = variable_get('node_export_file_mode', 'inline');
 
-/**
- * Implements hook_node_export_node_import_alter().
- */
-function node_export_file_node_export_node_import_alter(&$node, $original_node) {
-  node_export_file_alter_filefield($node, $original_node, 'import', 'node_export_file_filefield_filter');
-}
-
-/**
- * FileField field filter callback used in node_export_file_alter_filefield().
- */
-function node_export_file_filefield_filter($attribute, $field) {
-  return is_array($field);
-}
-
-/**
- * Abstract hook_node_export_node_alter() used by file fields.
- */
-function node_export_file_alter_filefield(&$node, $original_node, $op, $attribute_filter_callback) {
-  $assets_path = variable_get('node_export_file_assets_path', '');
-  $export_mode = variable_get('node_export_file_mode', 'inline');
-
-  switch ($export_mode) {
-    case 'local':
-      $export_var = 'node_export_file_path'; break;
-    case 'remote':
-      $export_var = 'node_export_file_url';  break;
-    default:
-    case 'inline':
-      $export_var = 'node_export_file_data'; break;
-  }
-
-  if ($op == 'export') {
-    if (node_export_file_check_assets_path($export_mode, $assets_path) === FALSE) {
-      // Don't continue if the assets path is not ready
-      return;
+    switch ($export_mode) {
+      case 'local':
+        $export_var = 'node_export_file_path';
+        break;
+      case 'remote':
+        $export_var = 'node_export_file_url';
+        break;
+      default:
+      case 'inline':
+        $export_var = 'node_export_file_data';
+        break;
     }
-  }
 
-  // get all fields from this node type
-  $fields = field_info_instances("node", $node->type);
-  foreach($fields as $field_instance) {
+    // If files are supposed to be copied to the assets path.
+    if ($export_mode == 'local' && $assets_path) {
+      // Ensure the assets path is created
+      if (!is_dir($assets_path) && mkdir($assets_path, 0777, TRUE) == FALSE) {
+        drupal_set_message(t("Could not create assets path! '!path'", array('!path' => $assets_path)), 'error');
+        // Don't continue if the assets path is not ready
+        return;
+      }
 
-    // load field infos to check the type
-    $field = &$node->{$field_instance['field_name']};
-    $info = field_info_field($field_instance['field_name']);
+      // Ensure it is writable
+      if (!is_writable($assets_path)) {
+        drupal_set_message(t("Assets path is not writable! '!path'", array('!path' => $assets_path)), 'error');
+        // Don't continue if the assets path is not ready
+        return;
+      }
+    }
 
-    // check if this field should implement file import/export system
-    if (in_array($info['type'], array("image", "file"))) {
+    // get all fields from this node type
+    $fields = field_info_instances('node', $node->type);
+    foreach($fields as $field_instance) {
 
-      // we need to loop into each language because i18n translation can build
-      // fields with different language than the node one.
-      foreach($field as $language => $files) {
-        if (is_array($files)) {
-          foreach($files as $i => $file) {
+      // load field infos to check the type
+      $field = &$node->{$field_instance['field_name']};
+      $info = field_info_field($field_instance['field_name']);
 
-            // convert file to array to stay into the default node_export_file format
-            $file = (object) $file;
+      // check if this field should implement file import/export system
+      if (in_array($info['type'], array("image", "file"))) {
 
-            // When exporting a node ...
-            if ($op == 'export') {
+        // we need to loop into each language because i18n translation can build
+        // fields with different language than the node one.
+        foreach($field as $language => $files) {
+          if (is_array($files)) {
+            foreach($files as $i => $file) {
+
+              // convert file to array to stay into the default node_export_file format
+              $file = (object) $file;
 
               // Check the file
               if (!isset($file->uri) || !is_file($file->uri)) {
@@ -144,23 +130,32 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
                 continue;
               }
 
-              // export file
-              $export_data = node_export_file_get_export_data($file, $export_mode, $assets_path);
+              if ($export_mode == 'local') {
+                if ($assets_path) {
+                  $export_data = $assets_path . '/' . basename($file->uri);
+                  if (!copy($file->uri, $export_data)) {
+                    drupal_set_message(t("Export file error, could not copy '%filepath' to '%exportpath'.", array('%filepath' => $file->uri, '%exportpath' => $export_data)), 'error');
+                    return FALSE;
+                  }
+                }
+                else {
+                  $export_data = $file->uri;
+                }
+              }
+              // Remote export mode
+              elseif ($export_mode == 'remote') {
+                $export_data = url($file->uri, array('absolute' => TRUE));
+              }
+              // Default is 'inline' export mode
+              else {
+                $export_data = base64_encode(file_get_contents($file->uri));
+              }
 
               // build the field again, and remove fid to be sure that imported node
               // will rebuild the file again, or keep an existing one with a different fid
               $field[$language][$i]['fid'] = NULL;
               $field[$language][$i][$export_var] = $export_data;
-              node_export_file_clean_local_file_path($field[$language][$i]['uri']);
-            }
 
-            // When importing a node ...
-            elseif ($op == 'import') {
-              $result = node_export_file_import_file($file);
-              // The file was saved successfully, update the file field (by reference)
-              if ($result == TRUE && isset($file->fid)) {
-                $field[$language][$i] = (array)$file;
-              }
             }
           }
         }
@@ -170,114 +165,40 @@ function node_export_file_alter_filefield(&$node, $original_node, $op, $attribut
 }
 
 /**
- * Ensure the assets path is exists and is writeable.
- *
- * @param $export_mode
- *   The files export mode, 'local' or 'remote'
- * @param $assets_path
- *   The assets path, should be empty ('') if assets are not supposed to
- *   be copied.
- * @return TRUE or FALSE or NULL
- *   TRUE  if the assets path is ready, and files should be copied there
- *   FALSE if the assets path is not ready, and files should be copied there
- *   NULL  if files shouldn't be copied to the assets path
+ * Implements hook_node_export_node_import_alter().
  */
-function node_export_file_check_assets_path($export_mode, $assets_path) {
-  // If files are supposed to be copied to the assets path.
-  if ($export_mode == 'local' && $assets_path) {
-    // Ensure the assets path is created
-    if (!is_dir($assets_path) && mkdir($assets_path, 0777, TRUE) == FALSE) {
-      drupal_set_message(t("Could not create assets path! '!path'", array('!path' => $assets_path)), 'error');
-      return FALSE;
-    }
+function node_export_file_node_export_node_import_alter(&$node, $original_node) {
+  // Get all fields from this node type.
+  $fields = field_info_instances('node', $node->type);
+  foreach($fields as $field_instance) {
 
-    // Ensure it is writable
-    if (!is_writable($assets_path)) {
-      drupal_set_message(t("Assets path is not writable! '!path'", array('!path' => $assets_path)), 'error');
-      return FALSE;
-    }
+    // Load field info to check the type.
+    $field = &$node->{$field_instance['field_name']};
+    $info = field_info_field($field_instance['field_name']);
 
-    return TRUE;
-  }
+    // Check if this field should implement file import/export system.
+    if (in_array($info['type'], array("image", "file"))) {
 
-  return NULL;
-}
+      // We need to loop into each language because i18n translation can build
+      // fields with different language than the node one.
+      foreach($field as $language => $files) {
+        if (is_array($files)) {
+          foreach($files as $i => $file) {
 
-/**
- * Checks an array of files, removing any that are invalid.
- *
- * @return $files or FALSE
- *   Returns an array of $files objects, or FALSE if there are no files.
- */
-function node_export_file_check_files($original_files) {
-  $files = array();
+            // Convert file to array to stay into the default node_export_file format.
+            $file = (object)$file;
 
-  if (is_array($original_files)) {
-    foreach ($original_files as $i => $file) {
-      $file = (object) $file;
+            $result = node_export_file_import_file($file);
+            // The file was saved successfully, update the file field (by reference).
+            if ($result == TRUE && isset($file->fid)) {
+              $field[$language][$i] = (array)$file;
+            }
 
-      if (isset($file->uri)) {
-        // NOTE: Preserving the $i key is important for later manipulation
-        $files[$i] = $file;
+          }
+        }
       }
     }
   }
-
-  return (count($files) > 0) ? $files : FALSE;
-}
-
-/**
- * Handles the file copying parts and local/remote parts of the file export.
- *
- * @param $file
- *   The file object to handle.
- * @param $export_mode
- *   The mode, 'inline' / 'local' / 'remote'
- * @param $assets_path
- *   Either empty ('') if files should not be copied to the assets path, or
- *   the path to a writable directory.
- */
-function node_export_file_get_export_data($file, $export_mode, $assets_path) {
-  if ($export_mode == 'local') {
-    if ($assets_path) {
-      $export_data = $assets_path . '/' . basename($file->uri);
-      if (!copy($file->uri, $export_data)) {
-        drupal_set_message(t("Export file error, could not copy '%filepath' to '%exportpath'.", array('%filepath' => $file->uri, '%exportpath' => $export_data)), 'error');
-        return FALSE;
-      }
-    }
-    else {
-      $export_data = $file->uri;
-    }
-  }
-  // Remote export mode
-  elseif ($export_mode == 'remote') {
-    $export_data = url($file->uri, array('absolute' => TRUE));
-  }
-  // Default is 'inline' export mode
-  else {
-    $export_data = base64_encode(file_get_contents($file->uri));
-  }
-
-  return $export_data;
-}
-
-/**
- * Replaces the files directory portion of a path with a substition
- * this forces clients decoding the node export to use their own
- * files directory path.  This helps get around issues with multi-site
- * installations and non-standard files directory locations.
- */
-function node_export_file_clean_local_file_path(&$path) {
-  $path = preg_replace('/^' . preg_quote('public:/', '/') . '/', NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION, $path);
-}
-
-/**
- * Replaces the NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION with the files directory
- * path, wherever found.
- */
-function node_export_file_unclean_local_file_path(&$path) {
-  $path = strtr($path, array(NODE_EXPORT_FILE_FILES_DIR_SUBSTITUTION => 'public:/'));
 }
 
 /**
@@ -290,9 +211,9 @@ function node_export_file_unclean_local_file_path(&$path) {
  *   have a valid $file->fid attribute.
  */
 function node_export_file_import_file(&$file) {
-  // Ensure the filepath is set correctly relative to this Drupal site's
-  // files directory
-  node_export_file_unclean_local_file_path($file->uri);
+  // This is here for historical reasons to support older exports.  It can be
+  // removed in the next major version.
+  $file->uri = strtr($file->uri, array('#FILES_DIRECTORY_PATH#' => 'public:/'));
 
   // The file is already in the right location AND either the
   // node_export_file_path is not set or the node_export_file_path and filepath
