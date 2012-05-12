@@ -257,15 +257,15 @@ function node_export_settings() {
 
   $form['file']['node_export_file_assets_path'] = array(
     '#type' => 'textfield',
-    '#title' => t('Export FileField assets path'),
+    '#title' => t('Local file field assets path'),
     '#size' => 60,
     '#maxlength' => 255,
     '#default_value' => variable_get('node_export_file_assets_path', ''),
     '#description' => t(
       'Optionally, copy files to this path when the node is exported.
       The primary advantage of this is to divert exported files into a
-      safe location so they can be commmitted to source control (eg: Subversion,
-      CVS, git).  <em>Tip: For install profile developers, setting this
+      safe location so they can be committed to source control (eg: SVN,
+      CVS, Git).  <em>Tip: For install profile developers, setting this
       path to <code>profiles/my_profile/node_export_assets</code> may be
       useful.</em>'
     ),
@@ -275,6 +275,14 @@ function node_export_settings() {
         ':input[name=node_export_file_mode]' => array('value' => 'local'),
       ),
     ),
+  );
+
+  $form['file']['node_export_file_supported_fields'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Supported file field types'),
+    '#default_value' => variable_get('node_export_file_supported_fields', 'file, image'),
+    '#maxlength' => 512,
+    '#description' => t('Comma seperated list of file field types to detect for export/import.'),
   );
 
   return system_settings_form($form);

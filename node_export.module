@@ -922,8 +922,10 @@ function node_export_file_field_export(&$node, $original_node) {
       $field = &$node->{$field_instance['field_name']};
       $info = field_info_field($field_instance['field_name']);
 
+      $supported_fields = array_map('trim', explode(',', variable_get('node_export_file_supported_fields', 'file, image')));
+
       // check if this field should implement file import/export system
-      if (in_array($info['type'], array("image", "file"))) {
+      if (in_array($info['type'], $supported_fields)) {
 
         // we need to loop into each language because i18n translation can build
         // fields with different language than the node one.
@@ -986,8 +988,10 @@ function node_export_file_field_import(&$node, $original_node) {
     $field = &$node->{$field_instance['field_name']};
     $info = field_info_field($field_instance['field_name']);
 
+    $supported_fields = array_map('trim', explode(',', variable_get('node_export_file_supported_fields', 'file, image')));
+
     // Check if this field should implement file import/export system.
-    if (in_array($info['type'], array("image", "file"))) {
+    if (in_array($info['type'], $supported_fields)) {
 
       // We need to loop into each language because i18n translation can build
       // fields with different language than the node one.
