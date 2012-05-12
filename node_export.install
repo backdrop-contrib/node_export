@@ -25,6 +25,7 @@ function node_export_uninstall() {
   variable_del('node_export_file_types');
   variable_del('node_export_file_mode');
   variable_del('node_export_file_assets_path');
+  variable_del('node_export_file_supported_fields');
 
   // Old variables.
   variable_del('node_export_method');
