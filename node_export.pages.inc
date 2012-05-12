@@ -225,6 +225,58 @@ function node_export_settings() {
     );
   }
 
+  $form['file'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('File fields'),
+  );
+
+  $types = node_type_get_names();
+  $form['file']['node_export_file_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Files exported for content types'),
+    '#default_value' => variable_get('node_export_file_types', array()),
+    '#options' => $types,
+    '#description' => t('Which content types should export file fields?'),
+  );
+
+  $textarea_delivery = $form['basic']['node_export_code']['#default_value'];
+
+  $mode_message_display = ($textarea_delivery != 'file');
+
+  $form['file']['node_export_file_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('File export mode'),
+    '#default_value' => variable_get('node_export_file_mode', 'inline'),
+    '#options' => array(
+      'inline' => t('Inline Base64'),
+      'local' => t('Local file export'),
+      'remote' => t('Remote file export, URL')
+     ),
+    '#description' => t('Should file exports be inline inside the export code, a local path to the file, or a URL?  Inline Base64 is the easiest option to use but can sometimes exceed PHP post limits, local and remote modes are more useful for power users.  <em>NOTE: Remote mode only works with a public files directory.</em>'),
+  );
+
+  $form['file']['node_export_file_assets_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Export FileField assets path'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#default_value' => variable_get('node_export_file_assets_path', ''),
+    '#description' => t(
+      'Optionally, copy files to this path when the node is exported.
+      The primary advantage of this is to divert exported files into a
+      safe location so they can be commmitted to source control (eg: Subversion,
+      CVS, git).  <em>Tip: For install profile developers, setting this
+      path to <code>profiles/my_profile/node_export_assets</code> may be
+      useful.</em>'
+    ),
+    '#required' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name=node_export_file_mode]' => array('value' => 'local'),
+      ),
+    ),
+  );
+
   return system_settings_form($form);
 }
 

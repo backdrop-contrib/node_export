@@ -22,6 +22,9 @@ function node_export_uninstall() {
     variable_del('node_export_reset_path_' . $type);
     variable_del('node_export_reset_book_mlid_' . $type);
   }
+  variable_del('node_export_file_types');
+  variable_del('node_export_file_mode');
+  variable_del('node_export_file_assets_path');
 
   // Old variables.
   variable_del('node_export_method');
@@ -31,11 +34,7 @@ function node_export_uninstall() {
 }
 
 /**
- * Implements hook_update_N().
- *
  * Warn user about changed permissions and configuration.
- *
- * @see hook_update_N()
  */
 function node_export_update_7300() {
   drupal_set_message(
@@ -62,4 +61,16 @@ function node_export_update_7300() {
     'warning'
   );
   return 'Note: Please update Node export permissions and configuration.';
+}
+
+/**
+ * Combine Node export file module directly into Node export.
+ */
+function node_export_update_7301() {
+  // Upgraders with node_export_file should have the module disabled.
+  if (module_exists('node_export_file')) {
+    drupal_set_message('<em>Node export file</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_file') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_file'), FALSE);
+  }
+  return 'Node export file removed, functionality moved to Node export.';
 }
