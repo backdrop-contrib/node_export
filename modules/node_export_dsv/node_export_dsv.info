@@ -1,0 +1,5 @@
+name = Node export DSV
+description = "Adds configurable DSV formats to Node export."
+dependencies[] = node_export
+core = 7.x
+package = "Node export"

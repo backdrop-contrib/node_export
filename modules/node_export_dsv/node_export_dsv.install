@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * The Node export DSV install file.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function node_export_dsv_uninstall() {
+  variable_del('node_export_dsv_delimiter');
+  variable_del('node_export_dsv_enclosure');
+  variable_del('node_export_dsv_seperator');
+}
