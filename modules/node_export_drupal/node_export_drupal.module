@@ -37,5 +37,5 @@ function node_export_drupal_node_export($nodes, $format) {
  * Implements hook_node_export_import().
  */
 function node_export_drupal_node_export_import($code_string) {
-  return eval($code_string);
+  return eval('return ' . $code_string . ';');
 }
