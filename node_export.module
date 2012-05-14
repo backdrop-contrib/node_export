@@ -37,7 +37,7 @@ function node_export_menu() {
     'description' => 'Configure the settings for Node export.',
     'file' => 'node_export.pages.inc',
   );
-  $selected_formats = variable_get('node_export_format', array('node_code'));
+  $selected_formats = variable_get('node_export_format', array('drupal'));
   if (count(array_filter($selected_formats)) > 1) {
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
@@ -217,7 +217,7 @@ function node_export_node_operations() {
   $operations = array();
   if (user_access('export nodes')) {
 
-    $selected_formats = variable_get('node_export_format', array('node_code'));
+    $selected_formats = variable_get('node_export_format', array('drupal'));
     if (count(array_filter($selected_formats)) > 1) {
       $format_handlers = node_export_format_handlers();
       foreach ($format_handlers as $format_handler => $format) {
@@ -297,10 +297,10 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
-  $node_export_format = variable_get('node_export_format', array('node_code'));
+  $node_export_format = variable_get('node_export_format', array('drupal'));
   $format_handler = $format ? $format : reset($node_export_format);
   if (!isset($format_handlers[$format_handler])) {
-    $format_handler = 'node_code';
+    $format_handler = 'drupal';
   }
 
   // Let other modules do special fixing up.
@@ -864,10 +864,6 @@ function node_export_restore_recursion($o) {
  */
 function node_export_format_handlers() {
   $format_handlers = &drupal_static(__FUNCTION__);
-
-  // Get default format handler.
-  module_load_include('inc', 'node_export', 'node_export.node_code');
-
   if (empty($format_handlers)) {
     $format_handlers = module_invoke_all('node_export_format_handlers');
   }

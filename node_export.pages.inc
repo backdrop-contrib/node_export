@@ -123,9 +123,9 @@ function node_export_settings() {
     $format_options[$format_handler] = $display;
   }
   asort($format_options);
-  $selected_formats = variable_get('node_export_format', array('node_code'));
+  $selected_formats = variable_get('node_export_format', array('drupal'));
   if (!count(array_filter($selected_formats))) {
-    $selected_formats = array('node_code');
+    $selected_formats = array('drupal');
   }
   if (count($format_options) > 1) {
     $form['basic']['node_export_format'] = array(
