@@ -29,7 +29,7 @@ function node_export_dsv_node_export_format_handlers() {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function node_export_file_form_node_export_settings_alter(&$form, &$form_state, $form_id) {
+function node_export_dsv_form_node_export_settings_alter(&$form, &$form_state, $form_id) {
   $form['basic']['dsv'] = array(
     '#type' => 'fieldset',
     '#title' => t('DSV'),
