@@ -22,11 +22,15 @@ function node_export_uninstall() {
     variable_del('node_export_reset_path_' . $type);
     variable_del('node_export_reset_book_mlid_' . $type);
   }
+  // File field functionality.
   variable_del('node_export_file_types');
   variable_del('node_export_file_mode');
   variable_del('node_export_file_assets_path');
   variable_del('node_export_file_supported_fields');
-
+  // DSV format.
+  variable_del('node_export_dsv_delimiter');
+  variable_del('node_export_dsv_enclosure');
+  variable_del('node_export_dsv_seperator');
 }
 
 /**
@@ -81,5 +85,40 @@ function node_export_update_7302() {
   variable_del('node_export_bulk_filename');
   variable_del('node_export_omitted');
   return 'Removed old variables.';
+}
 
+/**
+ * Combine Node export format modules directly into Node export.
+ */
+function node_export_update_7303() {
+  // Upgraders with format modules should have the modules disabled.
+  if (module_exists('node_export_node_code')) {
+    drupal_set_message('<em>Node export node code</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_node_code') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_node_code'), FALSE);
+  }
+  if (module_exists('node_export_drupal')) {
+    drupal_set_message('<em>Node export drupal</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_drupal') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_drupal'), FALSE);
+  }
+  if (module_exists('node_export_dsv')) {
+    drupal_set_message('<em>Node export DSV</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_dsv') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_dsv'), FALSE);
+  }
+  if (module_exists('node_export_csv')) {
+    drupal_set_message('<em>Node export CSV</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_csv') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_csv'), FALSE);
+  }
+  if (module_exists('node_export_json')) {
+    drupal_set_message('<em>Node export JSON</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_json') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_json'), FALSE);
+  }
+  if (module_exists('node_export_serialize')) {
+    drupal_set_message('<em>Node export serialize</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_serialize') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_serialize'), FALSE);
+  }
+  if (module_exists('node_export_xml')) {
+    drupal_set_message('<em>Node export XML</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_xml') . ' directory from the Drupal installation.', 'warning');
+    module_disable(array('node_export_xml'), FALSE);
+  }
+  return 'Node export format modules removed, functionality moved to Node export.';
 }

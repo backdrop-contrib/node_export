@@ -2,37 +2,18 @@
 
 /**
  * @file
- * The Node export DSV module.
+ * The Node export DSV format handler.
  *
  * Adds configurable DSV format to Node export.
  */
 
 /**
- * Implements hook_node_export_format_handlers().
+ * Settings callback.
  */
-function node_export_dsv_node_export_format_handlers() {
-  return array(
-    'dsv' => array(
-      '#title' => t('DSV'),
-      '#module' => 'node_export_dsv',
-      '#description' => t(
-        'Configurable <a href="!dsv">Delimiter-separated values</a> code. Export and import sites must be configured the same.',
-        array(
-          '!dsv' => 'http://en.wikipedia.org/wiki/Delimiter-separated_values'
-        )
-      ),
-    ),
-  );
-}
-
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function node_export_file_form_node_export_settings_alter(&$form, &$form_state, $form_id) {
-  $form['basic']['dsv'] = array(
+function node_export_dsv_settings($form, $form_state) {
+  $settings['dsv'] = array(
     '#type' => 'fieldset',
-    '#title' => t('DSV'),
+    '#title' => t('DSV format settings'),
     '#description' => t(
      'Select how your DSV output will be formatted - this must be configured the
      same on both sites.  By default this is configured to RFC4180 CSV format
@@ -46,7 +27,7 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#collapsed' => TRUE,
   );
 
-  $form['basic']['dsv']['node_export_dsv_delimiter'] = array(
+  $settings['dsv']['node_export_dsv_delimiter'] = array(
     '#type' => 'textfield',
     '#title' => t('Value delimiter'),
     '#size' => 5,
@@ -55,7 +36,7 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#required' => TRUE,
   );
 
-  $form['basic']['dsv']['node_export_dsv_enclosure'] = array(
+  $settings['dsv']['node_export_dsv_enclosure'] = array(
     '#type' => 'textfield',
     '#title' => t('Escape enclosure'),
     '#size' => 5,
@@ -64,7 +45,7 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#required' => TRUE,
   );
 
-  $form['basic']['dsv']['node_export_dsv_seperator'] = array(
+  $settings['dsv']['node_export_dsv_seperator'] = array(
     '#type' => 'textfield',
     '#title' => t('Record seperator'),
     '#size' => 5,
@@ -72,29 +53,29 @@ function node_export_file_form_node_export_settings_alter(&$form, &$form_state, 
     '#default_value' => variable_get('node_export_dsv_seperator', '\r\n'),
     '#required' => TRUE,
   );
+
+  return $settings;
+}
+
+function node_export_dsv_string($string) {
+  $replace = array(
+   '\n' => "\n",
+   '\r' => "\r",
+   '\t' => "\t",
+   '\v' => "\v",
+   '\e' => "\e",
+   '\f' => "\f",
+  );
+  return str_replace(array_keys($replace), array_values($replace), $string);
 }
 
 /**
- * Implements hook_module_implements_alter().
+ * Export callback.
  */
-function node_export_dsv_module_implements_alter(&$implementations, $hook) {
-  if ($hook == 'node_export_import') {
-    // Move node_export_dsv_node_export_import() to the end of the list.=
-    // Node export DSV is slow to fire on imports, so this allows other
-    // modules to respond first.
-    $group = $implementations['node_export_dsv'];
-    unset($implementations['node_export_dsv']);
-    $implementations['node_export_dsv'] = $group;
-  }
-}
-
-/**
- * Implements hook_node_export().
- */
-function node_export_dsv_node_export($nodes, $format) {
-  $delimiter = variable_get('node_export_dsv_delimiter', ',');
-  $enclosure = variable_get('node_export_dsv_enclosure', '"');
-  $seperator = variable_get('node_export_dsv_seperator', '\r\n');
+function node_export_dsv_export($nodes, $format) {
+  $delimiter = node_export_dsv_string(variable_get('node_export_dsv_delimiter', ','));
+  $enclosure = node_export_dsv_string(variable_get('node_export_dsv_enclosure', '"'));
+  $seperator = node_export_dsv_string(variable_get('node_export_dsv_seperator', '\r\n'));
   return node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator);
 }
 
@@ -121,7 +102,7 @@ function node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator) {
     }
   }
 
-  return node_export_dsv_array_to_dsv($dsv_lines);
+  return node_export_dsv_array_to_dsv($dsv_lines, $delimiter, $enclosure, $seperator);
 }
 
 /**
@@ -205,21 +186,21 @@ function node_export_dsv_encode_header_value($parents, $var, $k) {
 }
 
 /**
- * Implements hook_node_export_import().
+ * Import callback.
  */
-function node_export_dsv_node_export_import($code_string) {
-  $delimiter = variable_get('node_export_dsv_delimiter', ',');
-  $enclosure = variable_get('node_export_dsv_enclosure', '"');
-  $seperator = variable_get('node_export_dsv_seperator', '\r\n');
+function node_export_dsv_import($code_string) {
+  $delimiter = node_export_dsv_string(variable_get('node_export_dsv_delimiter', ','));
+  $enclosure = node_export_dsv_string(variable_get('node_export_dsv_enclosure', '"'));
+  $seperator = node_export_dsv_string(variable_get('node_export_dsv_seperator', '\r\n'));
   return node_export_dsv_decode($code_string, $delimiter, $enclosure, $seperator);
 }
 
 /**
  *  Interpret a DSV string.
  */
-function node_export_dsv_decode($code_string, $delimiter = ',', $enclosure = '"', $seperator = "\r\n") {
+function node_export_dsv_decode($code_string, $delimiter, $enclosure, $seperator) {
   // Get array data from DSV.
-  $array = @node_export_dsv_dsv_to_array($code_string);
+  $array = @node_export_dsv_dsv_to_array($code_string, $delimiter, $enclosure, $seperator);
 
   // If the first two rows are of equal length, we can assume this is a DSV.
   // Also checks there are a decent number of fields.
@@ -246,7 +227,7 @@ function node_export_dsv_decode($code_string, $delimiter = ',', $enclosure = '"'
 /**
  *  Encode DSV.
  */
-function node_export_dsv_array_to_dsv($array, $delimiter = ',', $enclosure = '"', $seperator = "\r\n") {
+function node_export_dsv_array_to_dsv($array, $delimiter, $enclosure, $seperator) {
   $lines = array();
   foreach ($array as $line) {
     $out_item = array();
@@ -271,7 +252,7 @@ function node_export_dsv_array_to_dsv($array, $delimiter = ',', $enclosure = '"'
 /**
  *  Decode DSV.
  */
-function node_export_dsv_dsv_to_array($string, $delimiter = ',', $enclosure = '"', $seperator = "\r\n") {
+function node_export_dsv_dsv_to_array($string, $delimiter, $enclosure, $seperator) {
   $lines = array();
   $out_item = array();
   $count = strlen($string);

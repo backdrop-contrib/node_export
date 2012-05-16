@@ -101,7 +101,7 @@ function node_export_settings_token_bits(&$form, $key) {
 /**
  * Menu callback to configure module settings.
  */
-function node_export_settings() {
+function node_export_settings($form, &$form_state) {
   $types = node_type_get_names();
 
   menu_rebuild();
@@ -121,8 +121,17 @@ function node_export_settings() {
       $display .= '</small></div>';
     }
     $format_options[$format_handler] = $display;
+
+    $format_settings = array();
+    if (!empty($format['#settings_callback'])) {
+      if (!empty($format['#file']) && is_file($format['#file'])) {
+        require_once $format['#file'];
+      }
+      $format_form = call_user_func($format['#settings_callback'], $form, $form_state);
+      $format_settings = $format_settings + $format_form;
+    }
+
   }
-  asort($format_options);
   $selected_formats = variable_get('node_export_format', array('drupal'));
   if (!count(array_filter($selected_formats))) {
     $selected_formats = array('drupal');
@@ -143,6 +152,8 @@ function node_export_settings() {
       '#value' => array($format => $format),
     );
   }
+
+  $form['basic'][] = $format_settings;
 
   $form['basic']['node_export_code'] = array(
     '#type' => 'radios',

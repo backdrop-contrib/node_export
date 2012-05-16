@@ -2,40 +2,22 @@
 
 /**
  * @file
- * The Node export JSON module.
+ * The Node export JSON format handler.
  *
  * Adds JSON format to Node export.
  */
 
 /**
- * Implements hook_node_export_format_handlers().
+ * Export callback.
  */
-function node_export_json_node_export_format_handlers() {
-  return array(
-    'json' => array(
-      '#title' => t('JSON'),
-      '#module' => 'node_export_json',
-      '#description' => t(
-        '<a href="!json">JavaScript Object Notation</a> code.',
-        array(
-          '!json' => 'http://en.wikipedia.org/wiki/JSON'
-        )
-      ),
-    ),
-  );
-}
-
-/**
- * Implements hook_node_export().
- */
-function node_export_json_node_export($nodes, $format) {
+function node_export_json_export($nodes, $format) {
   return drupal_json_encode(node_export_json_encode_objects($nodes));
 }
 
 /**
- * Implements hook_node_export_import().
+ * Import callback.
  */
-function node_export_json_node_export_import($code_string) {
+function node_export_json_import($code_string) {
   return node_export_json_decode_objects(drupal_json_decode($code_string));
 }
 

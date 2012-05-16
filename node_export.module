@@ -235,7 +235,6 @@ function node_export_node_operations() {
         'node_export' => array(
           'label' => t('Node export'),
           'callback' => 'node_export_bulk_operation',
-          //'callback arguments' => array(),
         ),
       );
     }
@@ -317,9 +316,12 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
     );
   }
 
-  $code_string = module_invoke(
-    $format_handlers[$format_handler]['#module'],
-    'node_export',
+  if (!empty($format_handlers[$format_handler]['#file']) && is_file($format_handlers[$format_handler]['#file'])) {
+    require_once $format_handlers[$format_handler]['#file'];
+  }
+
+  $code_string = call_user_func(
+    $format_handlers[$format_handler]['#export_callback'],
     $nodes,
     $format_handler
   );
@@ -446,11 +448,16 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   $nodes = array();
   $used_format = "";
   foreach ($format_handlers as $format_handler => $format) {
-    $nodes = module_invoke(
-      $format_handlers[$format_handler]['#module'],
-      'node_export_import',
+
+    if (!empty($format['#file']) && is_file($format['#file'])) {
+      require_once $format['#file'];
+    }
+
+    $nodes = call_user_func(
+      $format['#import_callback'],
       $code_string
     );
+
     if (!empty($nodes)) {
       $used_format = $format_handler;
       break;
@@ -699,55 +706,55 @@ function node_export_save(&$node) {
  * Prepare a clone of the node during import.
  */
 function node_export_node_clone($original_node) {
-    global $user;
+  global $user;
 
-    $node = clone($original_node);
+  $node = clone($original_node);
 
-    $node->nid = NULL;
-    $node->vid = NULL;
-    $node->name = !empty($user->name) ? $user->name : (!empty($user->uid) ? NULL : variable_get('anonymous', t('Anonymous')));
-    $node->uid = $user->uid;
+  $node->nid = NULL;
+  $node->vid = NULL;
+  $node->name = !empty($user->name) ? $user->name : (!empty($user->uid) ? NULL : variable_get('anonymous', t('Anonymous')));
+  $node->uid = $user->uid;
 
-    if (variable_get('node_export_reset_created_' . $node->type, TRUE)) {
-      $node->created = NULL;
+  if (variable_get('node_export_reset_created_' . $node->type, TRUE)) {
+    $node->created = NULL;
+  }
+
+  if (variable_get('node_export_reset_changed_' . $node->type, TRUE)) {
+    $node->changed = NULL;
+  }
+
+  if (variable_get('node_export_reset_menu_' . $node->type, TRUE)) {
+    $node->menu = NULL;
+  }
+
+  if (variable_get('node_export_reset_path_' . $node->type, TRUE)) {
+    $node->path = NULL;
+  }
+  else {
+    if (is_array($node->path) && isset($node->path['pid'])) {
+      unset($node->path['pid']);
     }
-
-    if (variable_get('node_export_reset_changed_' . $node->type, TRUE)) {
-      $node->changed = NULL;
+    if (module_exists('pathauto')) {
+      // Prevent pathauto from creating a new path alias.
+      $node->path['pathauto'] = FALSE;
     }
+  }
 
-    if (variable_get('node_export_reset_menu_' . $node->type, TRUE)) {
-      $node->menu = NULL;
+  if (variable_get('node_export_reset_book_mlid_' . $node->type, TRUE) && isset($node->book['mlid'])) {
+    $node->book['mlid'] = NULL;
+  }
+
+  $node->files = array();
+
+  if (variable_get('node_export_reset_' . $node->type, FALSE)) {
+    $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
+    // Fill in the default values.
+    foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
+      $node->$key = in_array($key, $node_options);
     }
+  }
 
-    if (variable_get('node_export_reset_path_' . $node->type, TRUE)) {
-      $node->path = NULL;
-    }
-    else {
-      if (is_array($node->path) && isset($node->path['pid'])) {
-        unset($node->path['pid']);
-      }
-      if (module_exists('pathauto')) {
-        // Prevent pathauto from creating a new path alias.
-        $node->path['pathauto'] = FALSE;
-      }
-    }
-
-    if (variable_get('node_export_reset_book_mlid_' . $node->type, TRUE) && isset($node->book['mlid'])) {
-      $node->book['mlid'] = NULL;
-    }
-
-    $node->files = array();
-
-    if (variable_get('node_export_reset_' . $node->type, FALSE)) {
-      $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-      // Fill in the default values.
-      foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
-        $node->$key = in_array($key, $node_options);
-      }
-    }
-
-    return $node;
+  return $node;
 
 }
 
@@ -863,6 +870,7 @@ function node_export_restore_recursion($o) {
  * @see hook_node_export_format_handlers()
  */
 function node_export_format_handlers() {
+  module_load_include('inc', 'node_export', 'node_export.formats');
   $format_handlers = &drupal_static(__FUNCTION__);
   if (empty($format_handlers)) {
     $format_handlers = module_invoke_all('node_export_format_handlers');
