@@ -22,6 +22,7 @@ function node_export_node_export_format_handlers() {
           '!json' => 'http://en.wikipedia.org/wiki/JSON'
         )
       ),
+      '#mime' => 'application/json',
       '#export_callback' => 'node_export_json_export',
       '#import_callback' => 'node_export_json_import',
     ),
@@ -65,6 +66,7 @@ function node_export_node_export_format_handlers() {
           '!xml' => 'http://en.wikipedia.org/wiki/XML',
         )
       ),
+      '#mime' => 'application/xml',
       '#export_callback' => 'node_export_xml_export',
       '#import_callback' => 'node_export_xml_import',
     ),

@@ -468,7 +468,11 @@ function node_export_get_file($nids, $code_string, $format = NULL) {
   $data = array('node_export_filename' => (object)$filename_data);
   $name = token_replace($name, $data);
 
-  header('Content-type: text/plain');
+  $formats = node_export_format_handlers();
+  $format_data = $formats[$format];
+  $mime = !empty($format_data['#mime']) ? $format_data['#mime'] : 'text/plain';
+
+  header('Content-type: ' . $mime);
   header('Content-Disposition: attachment; filename="' . $name . '"');
   print($code_string);
   // Clean exit.

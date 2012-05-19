@@ -168,12 +168,16 @@ function hook_node_export_encode_alter(&$code_string, $nodes, $format) {
  *   #module - the module that implements it.
  *   #description - the translated description, please include links to docs that
  *   give more info about the format.
- *   #file - if a file is to be included for callbacks to work, give full path here.
+ *   #file - if a file is to be included for callbacks to work, give full path
+ *     here. This is optional.
+ *   #mime - to override the default text/plain mime type for the downloaded
+ *     file set this to the desired mime type string.  This is optional.
  *   #settings_callback - the function name of the settings callback, this is a
  *     function that takes two params $form and $form_state, and returns an
  *     array of form elements to append to the $form['basic'] area.  The form
  *     uses system_settings_form() so values will be automatically saved into
- *     variables, but be sure your module deletes these variables upon uninstall.
+ *     variables, but be sure your module deletes these variables upon
+ *     uninstall. This is optional.
  *   #export_callback - the function name of the export callback, this is a
  *     function that takes two params $nodes and $format, where $nodes is an array
  *     of nodes and $format is the name of the format (in case same function used
