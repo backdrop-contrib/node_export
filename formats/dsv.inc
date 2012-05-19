@@ -54,6 +54,13 @@ function node_export_dsv_settings($form, $form_state) {
     '#required' => TRUE,
   );
 
+  $settings['dsv']['node_export_dsv_escape_eol'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Always escape values containing line breaks'),
+    '#default_value' => variable_get('node_export_dsv_escape_eol', 1),
+    '#description' => t('This is to overcome problems where Windows injects CRLF line breaks.'),
+  );
+
   return $settings;
 }
 
@@ -76,13 +83,14 @@ function node_export_dsv_export($nodes, $format) {
   $delimiter = node_export_dsv_string(variable_get('node_export_dsv_delimiter', ','));
   $enclosure = node_export_dsv_string(variable_get('node_export_dsv_enclosure', '"'));
   $seperator = node_export_dsv_string(variable_get('node_export_dsv_seperator', '\r\n'));
-  return node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator);
+  $escape_eol = variable_get('node_export_dsv_escape_eol', 1);
+  return node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator, $escape_eol);
 }
 
 /**
  * Build DSV string.
  */
-function node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator) {
+function node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator, $escape_eol) {
   $encoded_nodes = array();
   $dsv_lines = array();
 
@@ -102,7 +110,7 @@ function node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator) {
     }
   }
 
-  return node_export_dsv_array_to_dsv($dsv_lines, $delimiter, $enclosure, $seperator);
+  return node_export_dsv_array_to_dsv($dsv_lines, $delimiter, $enclosure, $seperator, $escape_eol);
 }
 
 /**
@@ -227,7 +235,7 @@ function node_export_dsv_decode($code_string, $delimiter, $enclosure, $seperator
 /**
  *  Encode DSV.
  */
-function node_export_dsv_array_to_dsv($array, $delimiter, $enclosure, $seperator) {
+function node_export_dsv_array_to_dsv($array, $delimiter, $enclosure, $seperator, $escape_eol) {
   $lines = array();
   foreach ($array as $line) {
     $out_item = array();
@@ -239,6 +247,7 @@ function node_export_dsv_array_to_dsv($array, $delimiter, $enclosure, $seperator
         (stripos($item, $delimiter) !== FALSE)
         || (stripos($item, $enclosure) !== FALSE)
         || (stripos($item, $seperator) !== FALSE)
+        || ($escape_eol && stripos($item, "\n") !== FALSE)
       ) {
         $item = $enclosure . $item . $enclosure;
       }

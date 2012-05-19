@@ -31,6 +31,7 @@ function node_export_uninstall() {
   variable_del('node_export_dsv_delimiter');
   variable_del('node_export_dsv_enclosure');
   variable_del('node_export_dsv_seperator');
+  variable_del('node_export_dsv_escape_eol');
 }
 
 /**
