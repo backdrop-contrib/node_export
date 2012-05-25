@@ -61,10 +61,12 @@ function node_export_update_6300() {
 /**
  * Disable node export CSV.
  */
-function node_export_update_7303() {
+function node_export_update_6301() {
   if (module_exists('node_export_csv')) {
     drupal_set_message('<em>Node export CSV</em> is deprecated.  Please delete the ' . drupal_get_path('module', 'node_export_csv') . ' directory from the Drupal installation.', 'warning');
     module_disable(array('node_export_csv'), FALSE);
   }
-  return 'Node export CSV is deprecated.';
+  return array(
+    array('success' => TRUE, 'query' => 'Node export CSV is deprecated.'),
+  );
 }
