@@ -117,7 +117,7 @@ function node_export_dsv_node_export($nodes, $format) {
   $enclosure = node_export_dsv_string(variable_get('node_export_dsv_enclosure', '"'));
   $seperator = node_export_dsv_string(variable_get('node_export_dsv_seperator', '\r\n'));
   $escape_eol = variable_get('node_export_dsv_escape_eol', 1);
-  return node_export_dsv_encode($nodes);
+  return node_export_dsv_encode($nodes, $delimiter, $enclosure, $seperator, $escape_eol);
 }
 
 /**
