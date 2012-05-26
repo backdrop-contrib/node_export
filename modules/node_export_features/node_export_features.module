@@ -22,26 +22,22 @@ function node_export_features_features_export_options() {
 
   $types = node_get_types('names');
   $result = db_query("SELECT n.nid, n.title, n.type FROM {node} n ORDER BY n.type, n.title ASC");
-  $msg_printed = FALSE;
 
   while ($row = db_fetch_object($result)) {
     $uuid = uuid_get_uuid('node', 'nid', $row->nid);
 
     // Skip nodes that have no UUID
     if (empty($uuid)) {
-      if (!$msg_printed) {
-        $msg_printed = TRUE;
-        drupal_set_message(
-          t('Some nodes are <strong>not</strong> available for export' .
-            ' because of missing UUIDs. Ensure UUIDs are being generated for' .
-            ' all content types and click the <em>Create missing UUIDs</em>' .
-            ' button on the <a href="!url">UUID settings page</a> to help' .
-            ' resolve this issue.',
-            array('!url' => url('admin/settings/uuid'))
-          ),
-          'warning'
-        );
-      }
+      drupal_set_message(
+        t('Some nodes are <strong>not</strong> available for export' .
+          ' because of missing UUIDs. Ensure UUIDs are being generated for' .
+          ' all content types and click the <em>Create missing UUIDs</em>' .
+          ' button on the <a href="!url">UUID settings page</a> to help' .
+          ' resolve this issue.',
+          array('!url' => url('admin/settings/uuid'))
+        ),
+        'warning'
+      );
     }
     else {
       $options[$uuid] = t('@type: @title', array(
