@@ -216,10 +216,23 @@ function node_export_settings($form, &$form_state) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     );
-    $form['publishing'][$type]['node_export_reset_' . $type] = array(
+    $form['publishing'][$type]['node_export_reset_status_' . $type] = array(
       '#type' => 'checkbox',
-      '#title' => t('Publishing options (status, moderate, promote, sticky, and revision)'),
-      '#default_value' => variable_get('node_export_reset_' . $type, FALSE),
+      '#title' => t('Published'),
+      '#default_value' => variable_get('node_export_reset_status_' . $type, FALSE),
+      '#description' => t('Set to unpublished'),
+    );
+    $form['publishing'][$type]['node_export_reset_promote_' . $type] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Promoted to front page'),
+      '#default_value' => variable_get('node_export_reset_promote_' . $type, FALSE),
+      '#description' => t('Set to not promoted'),
+    );
+    $form['publishing'][$type]['node_export_reset_sticky_' . $type] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Sticky at top of lists'),
+      '#default_value' => variable_get('node_export_reset_sticky_' . $type, FALSE),
+      '#description' => t('Set to not sticky'),
     );
     $form['publishing'][$type]['node_export_reset_author_' . $type] = array(
       '#type' => 'checkbox',

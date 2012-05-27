@@ -767,12 +767,16 @@ function node_export_node_clone($original_node) {
 
   $node->files = array();
 
-  if (variable_get('node_export_reset_' . $node->type, FALSE)) {
-    $node_options = variable_get('node_options_' . $node->type, array('status', 'promote'));
-    // Fill in the default values.
-    foreach (array('status', 'moderate', 'promote', 'sticky', 'revision') as $key) {
-      $node->$key = in_array($key, $node_options);
-    }
+  if (variable_get('node_export_reset_status_' . $node->type, FALSE)) {
+    $node->status = FALSE;
+  }
+
+  if (variable_get('node_export_reset_promote_' . $node->type, FALSE)) {
+    $node->promote = FALSE;
+  }
+
+  if (variable_get('node_export_reset_sticky_' . $node->type, FALSE)) {
+    $node->sticky = FALSE;
   }
 
   return $node;
