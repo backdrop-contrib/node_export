@@ -342,13 +342,10 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
  */
 function node_export_prepare_node(&$original_node) {
   // Create UUID if it's not there.
-  // Currently this uses a module_exists() until UUID becomes a dependency.
-  if (module_exists('uuid')) {
-    if (!uuid_get_uuid('node', 'nid', $original_node->nid)) {
-      $original_node->uuid = uuid_set_uuid('node', 'nid', $original_node->nid);
-      // Save it so future node exports are consistent.
-      node_save($original_node);
-    }
+  if (!uuid_get_uuid('node', 'nid', $original_node->nid)) {
+    $original_node->uuid = uuid_set_uuid('node', 'nid', $original_node->nid);
+    // Save it so future node exports are consistent.
+    node_save($original_node);
   }
 
   $node = clone($original_node);
@@ -523,6 +520,27 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
 
     // Import file fields.
     node_export_file_field_import($node, $original_node);
+
+    // Handle existing nodes.
+    $nids = entity_get_id_by_uuid('node', array($node->uuid));
+    if (!empty($nids[$node->uuid])) {
+      $existing = variable_get('node_export_existing', 'new');
+      switch ($existing) {
+        case 'new':
+          $node->is_new = TRUE;
+          unset($node->nid);
+          unset($node->uuid);
+          break;
+        case 'revision':
+          $node->nid = $nids[$node->uuid];
+          $node->is_new = FALSE;
+          $node->revision = 1;
+          break;
+        case 'skip':
+          $save = FALSE;
+          break;
+      }
+    }
 
     // Let other modules do special fixing up.
     drupal_alter('node_export_node_import', $node, $original_node, $save);
@@ -710,7 +728,7 @@ function node_export_node_clone($original_node) {
 
   $node = clone($original_node);
 
-  $node->nid = NULL;
+  //$node->nid = NULL;
   $node->vid = NULL;
   $node->name = !empty($user->name) ? $user->name : (!empty($user->uid) ? NULL : variable_get('anonymous', t('Anonymous')));
   $node->uid = $user->uid;

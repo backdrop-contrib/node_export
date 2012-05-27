@@ -191,6 +191,18 @@ function node_export_settings($form, &$form_state) {
     '#description' => t('If there are more than this many nodes, the [node_export_filename:nid-list] token for the filename will not be built.  This is to prevent very long filenames.'),
   );
 
+  $form['basic']['node_export_existing'] = array(
+    '#type' => 'radios',
+    '#title' => t('When importing a node that already exists'),
+    '#options' => array(
+      'new' => t('Create a new node'),
+      'revision' => t('Create a new revision of the existing node'),
+      'skip' => t('Skip the node'),
+    ),
+    '#description' => 'UUIDs are used to uniquely identify nodes.',
+    '#default_value' => variable_get('node_export_existing', 'new'),
+  );
+
   $form['publishing'] = array(
     '#type' => 'fieldset',
     '#title' => t('Reset values on import'),
