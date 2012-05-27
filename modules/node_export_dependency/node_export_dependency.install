@@ -10,6 +10,7 @@
  */
 function node_export_dependency_uninstall() {
   variable_del('node_export_dependency');
+  variable_del('node_export_dependency_lock');
   variable_del('node_export_dependency_disable_modules');
   variable_del('node_export_dependency_attach_nodes');
   variable_del('node_export_dependency_abort');

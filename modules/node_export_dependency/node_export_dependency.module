@@ -147,44 +147,50 @@ function node_export_dependency_node_export_import_alter(&$nodes, $format) {
  *
  * @param $iterations
  *   How many iterations to run.
+ * @param $seconds
+ *   How long to lock others from processing (will release upon completion).
  */
-function node_export_dependency_process_outstanding_dependencies($iterations) {
-  $node_export_dependency = variable_get('node_export_dependency', array());
+function node_export_dependency_process_outstanding_dependencies($iterations, $seconds = 240) {
+  if (REQUEST_TIME - variable_get('node_export_dependency_lock', REQUEST_TIME) >= 0) {
+    variable_set('node_export_dependency_lock', REQUEST_TIME + $seconds);
+    $node_export_dependency = variable_get('node_export_dependency', array());
 
-  // Iterate $node_export_dependency and try to handle any others.
-  $node_export_dependency_keys = array_keys($node_export_dependency);
-  // Shuffle so we don't get 'stuck' on a bunch of unsolvable cases.
-  shuffle($node_export_dependency_keys);
-  for ($count = 0; $count < $iterations; $count++) {
-    $node_uuid = next($node_export_dependency_keys);
-    if ($node_uuid === FALSE && empty($node_export_dependency_keys)) {
-      break;
-    }
-    else {
-      $node_uuid = reset($node_export_dependency_keys);
-    }
-    $dependencies = &$node_export_dependency[$node_uuid];
-    foreach ($dependencies as $dep_key => &$dependency) {
-      $nids = entity_get_id_by_uuid('node', array($node_uuid));
-      $node = node_load($nids[$node_uuid]);
-      if (!empty($node)) {
-        // Try to handle this dependency now, and unset if successfull.
-        if (node_export_dependency_handle_dependency($node, $dependency)) {
-          unset($dependencies[$dep_key]);
+    // Iterate $node_export_dependency and try to handle any others.
+    $node_export_dependency_keys = array_keys($node_export_dependency);
+    // Shuffle so we don't get 'stuck' on a bunch of unsolvable cases.
+    shuffle($node_export_dependency_keys);
+    for ($count = 0; $count < $iterations; $count++) {
+      $node_uuid = next($node_export_dependency_keys);
+      if ($node_uuid === FALSE && empty($node_export_dependency_keys)) {
+        break;
+      }
+      else {
+        $node_uuid = reset($node_export_dependency_keys);
+      }
+      $dependencies = &$node_export_dependency[$node_uuid];
+      foreach ($dependencies as $dep_key => &$dependency) {
+        $nids = entity_get_id_by_uuid('node', array($node_uuid));
+        $node = node_load($nids[$node_uuid]);
+        if (!empty($node)) {
+          // Try to handle this dependency now, and unset if successfull.
+          if (node_export_dependency_handle_dependency($node, $dependency)) {
+            unset($dependencies[$dep_key]);
+          }
+          node_save($node);
         }
-        node_save($node);
+      }
+      if (empty($node_export_dependency[$node_uuid])) {
+        unset($node_export_dependency[$node_uuid]);
       }
     }
-    if (empty($node_export_dependency[$node_uuid])) {
-      unset($node_export_dependency[$node_uuid]);
-    }
-  }
 
-  if (!empty($node_export_dependency)) {
-    variable_set('node_export_dependency', $node_export_dependency);
-  }
-  else {
-    variable_del('node_export_dependency');
+    if (!empty($node_export_dependency)) {
+      variable_set('node_export_dependency', $node_export_dependency);
+    }
+    else {
+      variable_del('node_export_dependency');
+    }
+    variable_del('node_export_dependency_lock');
   }
 }
 
