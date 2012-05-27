@@ -80,7 +80,7 @@ function node_export_dependency_load_dependencies(&$nodes, $nid) {
   $dependencies = node_export_dependency_get_dependencies('node', $node);
   foreach ($dependencies as $dep_key => &$dependency) {
     $disabled_modules = variable_get('node_export_dependency_disable_modules', array());
-    if (isset($disabled_modules[$dependency['module']])) {
+    if (!empty($disabled_modules[$dependency['module']])) {
       unset($dependencies[$dep_key]);
       continue;
     }
