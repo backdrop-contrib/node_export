@@ -20,7 +20,9 @@ function node_export_drupal_export($nodes, $format) {
  */
 function node_export_drupal_import($code_string) {
   $nodes = eval('return ' . $code_string . ';');
-  return node_export_drupal_decode_objects($nodes);
+  if (is_array($nodes)) {
+    return node_export_drupal_decode_objects($nodes);
+  }
 }
 
 /**
