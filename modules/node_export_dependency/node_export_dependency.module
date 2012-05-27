@@ -245,7 +245,7 @@ function node_export_dependency_handle_dependency(&$node, $dependency) {
 /**
  * Implements hook_node_export_dependency_alter().
  */
-function node_export_dependency_node_export_dependency_alter($handled, $node, $dependency) {
+function node_export_dependency_node_export_dependency_alter(&$handled, &$node, $dependency) {
 
   // @todo special fixing up for Book and OG nodes and other special cases?
 
