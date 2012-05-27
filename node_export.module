@@ -765,6 +765,7 @@ function node_export_node_clone($original_node) {
     $node->book['mlid'] = NULL;
   }
 
+  // @todo - is this still needed?
   $node->files = array();
 
   if (variable_get('node_export_reset_status_' . $node->type, FALSE)) {
