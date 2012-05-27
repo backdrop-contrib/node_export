@@ -221,6 +221,11 @@ function node_export_settings($form, &$form_state) {
       '#title' => t('Publishing options (status, moderate, promote, sticky, and revision)'),
       '#default_value' => variable_get('node_export_reset_' . $type, FALSE),
     );
+    $form['publishing'][$type]['node_export_reset_author_' . $type] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Author (will set to user performing the import)'),
+      '#default_value' => variable_get('node_export_reset_author_' . $type, TRUE),
+    );
     $form['publishing'][$type]['node_export_reset_created_' . $type] = array(
       '#type' => 'checkbox',
       '#title' => t('Created time (<em>Authored on</em> date/time)'),
