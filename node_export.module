@@ -547,6 +547,13 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
 
     if ($save) {
       node_export_save($node);
+
+      // Set a UUID immediately if there isn't one, in case after_import processes need it.
+      if (!uuid_get_uuid('node', 'nid', $node->nid)) {
+        $node->uuid = uuid_set_uuid('node', 'nid', $node->nid);
+        node_save($node);
+      }
+
       $new_nodes[$node->nid] = $node;
       $messages[] = $msg_t("Imported node !nid: !node", array('!nid' => $node->nid, '!node' => l($node->title, 'node/' . $node->nid)));
       $count++;

@@ -131,9 +131,9 @@ function node_export_dependency_load_dependencies(&$nodes, $nid) {
 }
 
 /**
- * Implements hook_node_export_import_alter().
+ * Implements hook_node_export_after_import_alter().
  */
-function node_export_dependency_node_export_import_alter(&$nodes, $format) {
+function node_export_dependency_node_export_after_import_alter($nodes, $format, $save) {
   $node_export_dependency = variable_get('node_export_dependency', array());
 
   foreach ($nodes as $node) {
@@ -152,6 +152,7 @@ function node_export_dependency_node_export_import_alter(&$nodes, $format) {
       }
       unset($node->node_export_dependency);
     }
+    node_save($node);
   }
 
   variable_set('node_export_dependency', $node_export_dependency);
