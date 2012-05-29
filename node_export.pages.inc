@@ -238,7 +238,7 @@ function node_export_settings($form, &$form_state) {
       '#type' => 'checkbox',
       '#title' => t('Author (will set to user performing the import)'),
       '#default_value' => variable_get('node_export_reset_author_' . $type, TRUE),
-      '#description' => t('Recommended unless using <em>Node export dependency</em> since User IDs could be different on import site and the wrong user may gain permission to edit the node.'),
+      '#description' => t('Recommended since User IDs could be different on import site and the wrong user may gain permission to edit the node.'),
     );
     $form['publishing'][$type]['node_export_reset_created_' . $type] = array(
       '#type' => 'checkbox',
@@ -264,6 +264,7 @@ function node_export_settings($form, &$form_state) {
       '#type' => 'checkbox',
       '#title' => t('Book menu link'),
       '#default_value' => variable_get('node_export_reset_book_mlid_' . $type, TRUE),
+      '#description' => t('Prevents Book node imports causing errors.'),
     );
   }
 

@@ -55,6 +55,24 @@ function node_export_dependency_form_node_export_settings_alter(&$form, &$form_s
     '#default_value' => variable_get('node_export_dependency_abort', 0),
     '#description' => t('Applies when attaching dependent nodes.'),
   );
+
+
+  $disabled_modules = variable_get('node_export_dependency_disable_modules', array());
+  foreach (element_children($form['publishing']) as $type) {
+    if (empty($disabled_modules['node'])) {
+      $form['publishing'][$type]['node_export_reset_author_' . $type]['#disabled'] = TRUE;
+      $form['publishing'][$type]['node_export_reset_author_' . $type]['#description'] .= ' <strong>' . t('Disabled by <em>Node export dependency</em> because <em>Node module</em> dependencies are enabled.') . '</strong>';
+      $form['publishing'][$type]['node_export_reset_author_' . $type]['#default_value'] = FALSE;
+      variable_set('node_export_reset_author_' . $type, FALSE);
+    }
+    if (empty($disabled_modules['book'])) {
+      $form['publishing'][$type]['node_export_reset_book_mlid_' . $type]['#disabled'] = TRUE;
+      $form['publishing'][$type]['node_export_reset_book_mlid_' . $type]['#description'] .= ' <strong>' . t('Disabled by <em>Node export dependency</em> because <em>Book module</em> dependencies are enabled.') . '</strong>';
+      $form['publishing'][$type]['node_export_reset_book_mlid_' . $type]['#default_value'] = FALSE;
+      variable_set('node_export_reset_book_mlid_' . $type, FALSE);
+    }
+  }
+
 }
 
 /**
