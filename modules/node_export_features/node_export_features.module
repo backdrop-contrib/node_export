@@ -23,7 +23,9 @@ function node_export_features_features_export_options() {
   $query = db_select('node', 'n')
     ->fields('n', array('nid', 'title', 'type'))
     ->orderBy('type')
-    ->orderBy('title');
+    ->orderBy('title')
+    ->range(0, 250)
+    ->addTag('node_export_features');
 
   $result = $query->execute();
 
