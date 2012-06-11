@@ -52,6 +52,15 @@ function node_export_features_features_export_options() {
     }
   }
 
+  if (count($options) == 250) {
+    drupal_set_message(
+      t('Due to limitations in Features only the first 250 nodes are available.'
+      . '  The query is tagged <em>node_export_features</em> if you want to'
+      . ' alter it.'),
+      'warning'
+    );
+  }
+
   return $options;
 }
 
