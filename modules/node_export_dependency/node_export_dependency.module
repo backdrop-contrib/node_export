@@ -383,7 +383,7 @@ function node_export_dependency_add(&$dependencies, $objects, $entity_type, $pro
 function node_export_dependency_get_uuid($entity_type, $id) {
   $entity_info = entity_get_info($entity_type);
   $id_key = $entity_info['entity keys']['id'];
-  return uuid_get_uuid($entity_type == 'user' ? 'users' : $entity_type, $id_key, $id);
+  return uuid_get_uuid($entity_type, $id_key, $id);
 }
 
 /**

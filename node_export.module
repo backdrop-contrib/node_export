@@ -1221,6 +1221,12 @@ if (!function_exists('uuid_get_uuid')) {
    *   The UUID of the object, or FALSE if not found.
    */
   function uuid_get_uuid($table, $key, $id) {
+    if ($entity_type == 'user') {
+      $table = 'users';
+    }
+    elseif ($entity_type == 'taxonomy_term') {
+      $table = 'taxonomy_term_data';
+    }
     return db_query("SELECT uuid FROM {" . $table . "} WHERE " . $key . " = :id", array(':id' => $id))->fetchField();
   }
 }
