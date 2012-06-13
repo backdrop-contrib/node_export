@@ -1218,9 +1218,8 @@ if (!function_exists('uuid_get_uuid')) {
   /**
    * API function to get the UUID of an object based on its serial ID.
    *
-   * @param $table
-   *   Base table of the object. Currently, one of node, revision_revisions,
-   *   users, vocabulary or term_data.
+   * @param $entity_type
+   *   The entity type.
    * @param $key
    *   The name of the serial ID column.
    * @param $id
@@ -1228,13 +1227,9 @@ if (!function_exists('uuid_get_uuid')) {
    * @return
    *   The UUID of the object, or FALSE if not found.
    */
-  function uuid_get_uuid($table, $key, $id) {
-    if ($table == 'user') {
-      $table = 'users';
-    }
-    elseif ($table == 'taxonomy_term') {
-      $table = 'taxonomy_term_data';
-    }
+  function uuid_get_uuid($entity_type, $key, $id) {
+    $entity_info = entity_get_info($entity_type);
+    $table = $entity_info('base table');
     return db_query("SELECT uuid FROM {" . $table . "} WHERE " . $key . " = :id", array(':id' => $id))->fetchField();
   }
 }
