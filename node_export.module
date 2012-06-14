@@ -1229,7 +1229,7 @@ if (!function_exists('uuid_get_uuid')) {
    */
   function uuid_get_uuid($entity_type, $key, $id) {
     $entity_info = entity_get_info($entity_type);
-    $table = $entity_info('base table');
+    $table = $entity_info['base table'];
     return db_query("SELECT uuid FROM {" . $table . "} WHERE " . $key . " = :id", array(':id' => $id))->fetchField();
   }
 }
