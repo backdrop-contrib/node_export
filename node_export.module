@@ -252,6 +252,72 @@ function node_export_bulk_operation($nodes = NULL, $format = NULL, $delivery = N
 }
 
 /**
+ * Implements hook_action_info()
+ */
+function node_export_action_info() {
+  $actions = array();
+  if (user_access('export nodes')) {
+    $selected_formats = variable_get('node_export_format', array('drupal'));
+    if (count(array_filter($selected_formats)) > 1) {
+      $format_handlers = node_export_format_handlers();
+      foreach ($format_handlers as $format_handler => $format) {
+        if ($selected_formats[$format_handler]) {
+           // @todo: should formats be able to define their own actions?
+           if (!empty($format['#file']) && is_file($format['#file'])) {
+             require_once $format['#file'];
+           }
+           $format_action = 'node_export_' . $format_handler . '_action';
+           if (function_exists($format_action . '_form')) {
+             $actions[$format_action] = array(
+               'type' => 'node',
+               'label' => t('Node export') . " (" . $format['#title'] . ")",
+               'behavior' => array('changes_property'),
+               // This action only works when invoked through VBO. That's why it's
+               // declared as non-configurable to prevent it from being shown in the
+               // "Create an advanced action" dropdown on admin/config/system/actions.
+               'configurable' => FALSE,
+               'vbo_configurable' => TRUE,
+             );
+          }
+        }
+      }
+    }
+    else {
+      $actions = array(
+        'node_export_action' => array(
+          'type' => 'node',
+          'label' => t('Node export'),
+          'behavior' => array('changes_property'),
+          // This action only works when invoked through VBO. That's why it's
+          // declared as non-configurable to prevent it from being shown in the
+          // "Create an advanced action" dropdown on admin/config/system/actions.
+          'configurable' => FALSE,
+          'vbo_configurable' => TRUE,
+        ),
+      );
+    }
+  }
+  return $actions;
+
+}
+
+/**
+ * Export Nodes Action "Configuration" Form
+ *
+ * Technically for a normal action this is where you would provide config
+ * for the actual execution of the action. However, we're hijacking it to
+ * present the completed node_export_gui page.
+ */
+function node_export_action_form($context, &$form_state, $format = NULL) {
+  // Get the name of the vbo views field
+  $vbo = _views_bulk_operations_get_field($form_state['build_info']['args'][0]);
+  // Adjust the selection in case the user chose 'select all'
+  _views_bulk_operations_adjust_selection($form_state['selection'], $form_state['select_all_pages'], $vbo);
+  $nodes = array_combine($form_state['selection'], $form_state['selection']);
+  return node_export_bulk_operation($nodes);
+}
+
+/**
  * Export nodes.
  *
  * @param $nids
@@ -1239,10 +1305,10 @@ if (!function_exists('uuid_get_uuid')) {
  */
 function node_export_hook_info() {
   $hooks['token_info'] = array(
-    'group' => 'page',
+    'group' => 'pages',
   );
   $hooks['tokens'] = array(
-    'group' => 'page',
+    'group' => 'pages',
   );
   return $hooks;
 }

@@ -42,3 +42,10 @@ function node_export_drupal_decode_objects($array) {
   }
   return $array;
 }
+
+/**
+ * Callback for actions.
+ */
+function node_export_drupal_action_form($context, &$form_state) {
+  return node_export_action_form($context, $form_state, 'drupal');
+}
