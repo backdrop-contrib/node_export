@@ -76,7 +76,8 @@ USAGE
    a) Use the form at 'Node export: import' under 'Add content'
       (node/add/node_export).
    b) Use Drush: http://drupal.org/project/drush
-   c) For advanced imports if you are familiar with the Feeds module, enable
+   c) Using your created Feature.
+   d) For advanced imports if you are familiar with the Feeds module, enable
       Node export feeds module to use with the Feeds import interface 
       http://drupal.org/project/feeds
 
