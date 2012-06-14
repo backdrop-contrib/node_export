@@ -21,6 +21,7 @@ function node_export_permission() {
     'use PHP to import nodes' => array(
       'title' => t('Use PHP to import nodes'),
       'description' => t('Required for importing, but can allow execution of PHP.'),
+      'restrict access' => TRUE,
     ),
   );
 }
