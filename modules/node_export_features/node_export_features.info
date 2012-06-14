@@ -1,5 +1,5 @@
 name = Node export features
-description = Adds features support to Node export
+description = Adds Features support to Node export, so you can put your exports into Features modules.
 dependencies[] = node_export
 dependencies[] = uuid
 dependencies[] = features

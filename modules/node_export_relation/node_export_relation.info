@@ -1,4 +1,4 @@
-name = Node export relation
+name = Node export relation (deprecated)
 description = Helps maintain relationships.  Supports node references, taxonomy, and organic groups.
 dependencies[] = node_export
 dependencies[] = uuid
