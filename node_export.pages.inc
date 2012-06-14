@@ -142,7 +142,7 @@ function node_export_settings($form, &$form_state) {
       '#title' => t('Format to use when exporting a node'),
       '#default_value' => $selected_formats,
       '#options' => $format_options,
-      '#description' => t("If you select multiple formats, they will all be available to the user.  If you select none, or the format handler is not found, it will use the default 'Node code'.  This does not affect imports, the required import format will be used automatically."),
+      '#description' => t("If you select multiple formats, they will all be available to the user.  If you select none, or the format handler is not found, it will use the default 'Drupal var export'.  This does not affect imports, the required import format will be used automatically."),
     );
   }
   else {
