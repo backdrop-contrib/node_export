@@ -65,7 +65,7 @@ USAGE
 -----
 1. To export nodes, either:
    a) Use the 'Node export' tab on a node page.
-   b) Use the Find content page (admin/content/node) to filter the nodes you 
+   b) Use the Find content page (admin/content) to filter the nodes you 
       wish to export and then choose 'Node export' under the 'Update options'.
    c) Use Drush: http://drupal.org/project/drush
    d) Create a Feature (see tips below) http://drupal.org/project/features
