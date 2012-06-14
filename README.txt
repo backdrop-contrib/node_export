@@ -72,7 +72,7 @@ USAGE
    e) Create a View of nodes and use the Views Bulk Operations (VBO) module
       http://drupal.org/project/views_bulk_operations
 
-2. To import nodes, either:
+2. To import nodes that were exported with Node export, either:
    a) Use the form at 'Node export: import' under 'Add content'
       (node/add/node_export).
    b) Use Drush: http://drupal.org/project/drush
