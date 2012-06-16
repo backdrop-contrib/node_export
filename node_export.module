@@ -579,7 +579,6 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
       switch ($existing) {
         case 'new':
           $node->is_new = TRUE;
-          unset($node->nid);
           unset($node->uuid);
           break;
         case 'revision':
@@ -779,7 +778,7 @@ function node_export_node_clone($original_node) {
 
   $node = clone($original_node);
 
-  //$node->nid = NULL;
+  $node->nid = NULL;
   $node->vid = NULL;
 
   if (variable_get('node_export_reset_author_' . $node->type, TRUE)) {
