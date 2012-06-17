@@ -13,7 +13,6 @@ function node_export_uninstall() {
   variable_del('node_export_code');
   variable_del('node_export_filename');
   variable_del('node_export_file_list');
-  variable_del('node_export_nodes_without_confirm'); // @todo - what is this?
   variable_del('node_export_existing');
   $types = node_type_get_names();
   foreach ($types as $type => $name) {
@@ -41,6 +40,7 @@ function node_export_uninstall() {
 
   // Old vars.
   variable_del('node_export_reset_' . $type);
+  variable_del('node_export_nodes_without_confirm');
 
 }
 

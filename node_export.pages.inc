@@ -199,7 +199,7 @@ function node_export_settings($form, &$form_state) {
       'revision' => t('Create a new revision of the existing node'),
       'skip' => t('Skip the node'),
     ),
-    '#description' => 'UUIDs are used to uniquely identify nodes.',
+    '#description' => t('UUIDs are used to uniquely identify nodes.'),
     '#default_value' => variable_get('node_export_existing', 'new'),
   );
 
