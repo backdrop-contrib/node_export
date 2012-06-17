@@ -96,14 +96,14 @@ function node_export_features_features_export_render($module, $data, $export = N
 }
 
 /**
- * Implementation of hook_feature_revert().
+ * Implementation of hook_features_revert().
  */
 function node_export_features_features_revert($module = NULL) {
   node_export_features_features_rebuild($module);
 }
 
 /**
- * Implementation of hook_feature_rebuild().
+ * Implementation of hook_features_rebuild().
  */
 function node_export_features_features_rebuild($module) {
   $node_export = features_get_default('node_export_features', $module);
