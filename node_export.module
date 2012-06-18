@@ -1283,17 +1283,3 @@ if (!function_exists('uuid_get_uuid')) {
     return db_query("SELECT uuid FROM {" . $table . "} WHERE " . $key . " = :id", array(':id' => $id))->fetchField();
   }
 }
-
-/**
- * Implements hook_hook_info().
- */
-function node_export_hook_info() {
-  $hooks['token_info'] = array(
-    'group' => 'pages',
-  );
-  $hooks['tokens'] = array(
-    'group' => 'pages',
-  );
-  return $hooks;
-}
-
