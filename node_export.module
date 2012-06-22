@@ -261,7 +261,7 @@ function node_export_action_info() {
     $selected_formats = variable_get('node_export_format', array('drupal'));
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
-      if ($selected_formats[$format_handler]) {
+      if (!empty($selected_formats[$format_handler])) {
          // @todo: should formats be able to define their own actions?
          if (!empty($format['#file']) && is_file($format['#file'])) {
            require_once $format['#file'];
