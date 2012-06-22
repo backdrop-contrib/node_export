@@ -85,7 +85,7 @@ function node_export_feeds_feeds_importer_default() {
             'unique' => FALSE,
           ),
           2 => array(
-            'source' => 'published',
+            'source' => 'created',
             'target' => 'created',
             'unique' => FALSE,
           ),
