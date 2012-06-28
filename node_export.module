@@ -854,7 +854,7 @@ function node_export_get_menu($node) {
   $type = $node->type;
 
   // Only keep the values we care about.
-  if (!empty($node->menu)) {
+  if (!empty($node->menu['mlid'])) {
 
     // Store a copy of the old menu
     $old_menu = $node->menu;
@@ -868,8 +868,13 @@ function node_export_get_menu($node) {
 
     // Make a list of values to attempt to copy.
     $menu_fields = array(
-      'link_title', 'plid', 'menu_name', 'weight', // These should import properly always.
-      'hidden', 'expanded', 'has_children', // These will only import properly on 'Save as a new node then edit' imports.
+      'link_title',
+      'plid',
+      'menu_name',
+      'weight',
+      'hidden',
+      'expanded',
+      'has_children',
     );
 
     // Copy those fields from the old menu over the new menu defaults.
