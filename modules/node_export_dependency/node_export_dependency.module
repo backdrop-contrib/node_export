@@ -265,7 +265,7 @@ function node_export_dependency_init() {
 function node_export_dependency_handle_dependency(&$node, $dependency) {
   $handled = FALSE;
   $disabled_modules = variable_get('node_export_dependency_disable_modules', array());
-  if (isset($disabled_modules[$dependency['module']])) {
+  if (!empty($disabled_modules[$dependency['module']])) {
     // We're not handling it, so it is 'handled'.
     return TRUE;
   }
