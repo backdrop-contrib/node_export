@@ -4,7 +4,7 @@
  * @file
  * The Node export module.
  *
- * Allows users to export nodes and then import them into another Drupal installation.
+ * Allows users to export nodes and then import them into another backdrop installation.
  */
 
 /**
@@ -32,13 +32,13 @@ function node_export_permission() {
 function node_export_menu() {
   $items['admin/config/content/node_export'] = array(
     'access arguments' => array('administer site configuration'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('node_export_settings'),
     'title' => 'Node export',
     'description' => 'Configure the settings for Node export.',
     'file' => 'node_export.pages.inc',
   );
-  $selected_formats = variable_get('node_export_format', array('drupal'));
+  $selected_formats = variable_get('node_export_format', array('backdrop'));
   if (count(array_filter($selected_formats)) > 1) {
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
@@ -80,7 +80,7 @@ function node_export_menu() {
   );
   $items['node/add/node_export'] = array(
     'title' => 'Node export: import',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('node_export_import_form'),
     'access callback' => 'node_export_access_import',
     'description' => 'Import content using <em>Node export</em>.',
@@ -112,7 +112,7 @@ function node_export_access_export($node) {
 
   // Let other modules alter this - for example to only allow some users
   // to export specific nodes or types.
-  drupal_alter("node_export_access_export", $access, $node);
+  backdrop_alter("node_export_access_export", $access, $node);
   return $access;
 }
 
@@ -146,7 +146,7 @@ function node_export_access_import($node = NULL) {
 
   // Let other modules alter this - for example to only allow some users
   // to import specific nodes or types.
-  drupal_alter("node_export_access_import", $access, $node);
+  backdrop_alter("node_export_access_import", $access, $node);
   return $access;
 }
 
@@ -207,7 +207,7 @@ function node_export_node_type_delete($info) {
 function node_export_views_api() {
   return array(
     'api' => 3,
-    'path' => drupal_get_path('module', 'node_export') . '/views',
+    'path' => backdrop_get_path('module', 'node_export') . '/views',
   );
 }
 
@@ -218,7 +218,7 @@ function node_export_node_operations() {
   $operations = array();
   if (user_access('export nodes')) {
 
-    $selected_formats = variable_get('node_export_format', array('drupal'));
+    $selected_formats = variable_get('node_export_format', array('backdrop'));
     if (count(array_filter($selected_formats)) > 1) {
       $format_handlers = node_export_format_handlers();
       foreach ($format_handlers as $format_handler => $format) {
@@ -258,7 +258,7 @@ function node_export_bulk_operation($nodes = NULL, $format = NULL, $delivery = N
 function node_export_action_info() {
   $actions = array();
   if (user_access('export nodes')) {
-    $selected_formats = variable_get('node_export_format', array('drupal'));
+    $selected_formats = variable_get('node_export_format', array('backdrop'));
     $format_handlers = node_export_format_handlers();
     foreach ($format_handlers as $format_handler => $format) {
       if (!empty($selected_formats[$format_handler])) {
@@ -347,14 +347,14 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
 
   // Get the node code from the format handler
   $format_handlers = node_export_format_handlers();
-  $node_export_format = variable_get('node_export_format', array('drupal'));
+  $node_export_format = variable_get('node_export_format', array('backdrop'));
   $format_handler = $format ? $format : reset($node_export_format);
   if (!isset($format_handlers[$format_handler])) {
-    $format_handler = 'drupal';
+    $format_handler = 'backdrop';
   }
 
   // Let other modules do special fixing up.
-  drupal_alter('node_export', $nodes, $format_handler);
+  backdrop_alter('node_export', $nodes, $format_handler);
 
   // If any nodes are set to FALSE, then an error was triggered in another module.
   // Currently modules doing this should also leave a watchdog warning.
@@ -378,7 +378,7 @@ function node_export($nids, $format = NULL, $msg_t = 't') {
   );
 
   // Let modules modify the node code.
-  drupal_alter('node_export_encode', $code_string, $nodes, $format_handler);
+  backdrop_alter('node_export_encode', $code_string, $nodes, $format_handler);
 
   return array(
     'success' => TRUE,
@@ -423,7 +423,7 @@ function node_export_prepare_node(&$original_node) {
     $node->taxonomy = $new_taxonomy;
   }
 
-  // Attach path to the node.  Drupal doesn't attach this anymore for
+  // Attach path to the node.  backdrop doesn't attach this anymore for
   // performance reasons http://drupal.org/node/332333#comment-2163634.
   $node->path = path_load(array('source' => 'node/' . $node->nid));
 
@@ -434,13 +434,13 @@ function node_export_prepare_node(&$original_node) {
   $node = node_export_remove_recursion($node);
 
   // Add a parameter to identify this node as coming from D7, might be useful some day.
-  $node->node_export_drupal_version = '7';
+  $node->node_export_backdrop_version = '7';
 
   // Export file fields.
   node_export_file_field_export($node, $original_node);
 
   // Let other modules do special fixing up.
-  drupal_alter('node_export_node', $node, $original_node);
+  backdrop_alter('node_export_node', $node, $original_node);
 
   return $node;
 }
@@ -489,7 +489,7 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   }
 
   // Allow modules to manipulate the $code_string.
-  drupal_alter('node_export_decode', $code_string);
+  backdrop_alter('node_export_decode', $code_string);
 
   // Pass the string to each format handler until one returns something useful.
   $format_handlers = node_export_format_handlers();
@@ -563,7 +563,7 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   $count = 0;
   $total = count($nodes);
   // Let other modules do special fixing up.
-  drupal_alter('node_export_import', $nodes, $used_format, $save);
+  backdrop_alter('node_export_import', $nodes, $used_format, $save);
   $new_nodes = array();
   $messages = array();
   foreach ($nodes as $original_node) {
@@ -593,7 +593,7 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
     }
 
     // Let other modules do special fixing up.
-    drupal_alter('node_export_node_import', $node, $original_node, $save);
+    backdrop_alter('node_export_node_import', $node, $original_node, $save);
 
     if ($save) {
       node_export_save($node);
@@ -607,7 +607,7 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   }
 
   if ($save) {
-    drupal_alter('node_export_after_import', $new_nodes, $used_format, $save);
+    backdrop_alter('node_export_after_import', $new_nodes, $used_format, $save);
     $messages[] = $msg_t("!count of !total nodes were imported.  Some values may have been reset depending on Node export's configuration.", array('!total' => $total, '!count' => $count));
 
     // Clear the page and block caches.
@@ -690,7 +690,7 @@ function node_export_save(&$node) {
     elseif (empty($node->log)) {
       // If we are updating an existing node without adding a new revision, we
       // need to make sure $node->log is unset whenever it is empty. As long as
-      // $node->log is unset, drupal_write_record() will not attempt to update
+      // $node->log is unset, backdrop_write_record() will not attempt to update
       // the existing database column when re-saving the revision; therefore,
       // this code allows us to avoid clobbering an existing log entry with an
       // empty one.
@@ -709,14 +709,14 @@ function node_export_save(&$node) {
     if ($node->is_new) {
       // For new nodes, save new records for both the node itself and the node
       // revision.
-      drupal_write_record('node', $node);
+      backdrop_write_record('node', $node);
       _node_save_revision($node, $user->uid);
       $op = 'insert';
     }
     else {
       // For existing nodes, update the node record which matches the value of
       // $node->nid.
-      drupal_write_record('node', $node, 'nid');
+      backdrop_write_record('node', $node, 'nid');
       // Then, if a new node revision was requested, save a new record for
       // that; otherwise, update the node revision record which matches the
       // value of $node->vid.
@@ -960,7 +960,7 @@ function node_export_restore_recursion($o) {
  */
 function node_export_format_handlers() {
   module_load_include('inc', 'node_export', 'node_export.formats');
-  $format_handlers = &drupal_static(__FUNCTION__);
+  $format_handlers = &backdrop_static(__FUNCTION__);
   if (empty($format_handlers)) {
     $format_handlers = module_invoke_all('node_export_format_handlers');
   }
@@ -994,14 +994,14 @@ function node_export_file_field_export(&$node, $original_node) {
     if ($export_mode == 'local' && $assets_path) {
       // Ensure the assets path is created
       if (!is_dir($assets_path) && mkdir($assets_path, 0777, TRUE) == FALSE) {
-        drupal_set_message(t("Could not create assets path! '!path'", array('!path' => $assets_path)), 'error');
+        backdrop_set_message(t("Could not create assets path! '!path'", array('!path' => $assets_path)), 'error');
         // Don't continue if the assets path is not ready
         return;
       }
 
       // Ensure it is writable
       if (!is_writable($assets_path)) {
-        drupal_set_message(t("Assets path is not writable! '!path'", array('!path' => $assets_path)), 'error');
+        backdrop_set_message(t("Assets path is not writable! '!path'", array('!path' => $assets_path)), 'error');
         // Don't continue if the assets path is not ready
         return;
       }
@@ -1031,7 +1031,7 @@ function node_export_file_field_export(&$node, $original_node) {
 
               // Check the file
               if (!isset($file->uri) || !is_file($file->uri)) {
-                drupal_set_message(t("File field found on node, but file doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
+                backdrop_set_message(t("File field found on node, but file doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'error');
                 continue;
               }
 
@@ -1039,7 +1039,7 @@ function node_export_file_field_export(&$node, $original_node) {
                 if ($assets_path) {
                   $export_data = $assets_path . '/' . basename($file->uri);
                   if (!copy($file->uri, $export_data)) {
-                    drupal_set_message(t("Export file error, could not copy '%filepath' to '%exportpath'.", array('%filepath' => $file->uri, '%exportpath' => $export_data)), 'error');
+                    backdrop_set_message(t("Export file error, could not copy '%filepath' to '%exportpath'.", array('%filepath' => $file->uri, '%exportpath' => $export_data)), 'error');
                     return FALSE;
                   }
                 }
@@ -1152,7 +1152,7 @@ function _node_export_file_field_import_file(&$file) {
     $file = file_save($file);
   }
   elseif (isset($file->node_export_file_data)) {
-    $directory = drupal_dirname($file->uri);
+    $directory = backdrop_dirname($file->uri);
     if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       if (file_put_contents($file->uri, base64_decode($file->node_export_file_data))) {
         $file = file_save($file);
@@ -1162,7 +1162,7 @@ function _node_export_file_field_import_file(&$file) {
   // The file is in a local location, move it to the
   // destination then finish the save
   elseif (isset($file->node_export_file_path) && is_file($file->node_export_file_path)) {
-    $directory = drupal_dirname($file->uri);
+    $directory = backdrop_dirname($file->uri);
     if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
       // The $file->node_export_file_path is passed to reference, and modified
       // by file_unmanaged_copy().  Making a copy to avoid tainting the original.
@@ -1182,11 +1182,11 @@ function _node_export_file_field_import_file(&$file) {
 
     $temp_path = file_directory_temp() . '/' . md5(mt_rand()) . '.txt';
     if (($source = fopen($file->node_export_file_url, 'r')) == FALSE) {
-      drupal_set_message(t("Could not open '@file' for reading.", array('@file' => $file->node_export_file_url)));
+      backdrop_set_message(t("Could not open '@file' for reading.", array('@file' => $file->node_export_file_url)));
       return FALSE;
     }
     elseif (($dest = fopen($temp_path, 'w')) == FALSE) {
-      drupal_set_message(t("Could not open '@file' for writing.", array('@file' => $file->uri)));
+      backdrop_set_message(t("Could not open '@file' for writing.", array('@file' => $file->uri)));
       return FALSE;
     }
     else {
@@ -1200,14 +1200,14 @@ function _node_export_file_field_import_file(&$file) {
       clearstatcache();
 
       if ($bytes_read != filesize($temp_path)) {
-        drupal_set_message(t("Remote export '!url' could not be fully downloaded, '@file' to temporary location '!temp'.", array('!url' => $file->node_export_file_url, '@file' => $file->uri, '!temp' => $temp_path)));
+        backdrop_set_message(t("Remote export '!url' could not be fully downloaded, '@file' to temporary location '!temp'.", array('!url' => $file->node_export_file_url, '@file' => $file->uri, '!temp' => $temp_path)));
         return FALSE;
       }
       // File was downloaded successfully!
       else {
         if (!@copy($temp_path, $file->uri)) {
           unlink($temp_path);
-          drupal_set_message(t("Could not move temporary file '@temp' to '@file'.", array('@temp' => $temp_path, '@file' => $file->uri)));
+          backdrop_set_message(t("Could not move temporary file '@temp' to '@file'.", array('@temp' => $temp_path, '@file' => $file->uri)));
           return FALSE;
         }
 
@@ -1224,7 +1224,7 @@ function _node_export_file_field_import_file(&$file) {
   }
   // Unknown error
   else {
-    drupal_set_message(t("Unknown error occurred attempting to import file: @filepath", array('@filepath' => $file->uri)), 'error');
+    backdrop_set_message(t("Unknown error occurred attempting to import file: @filepath", array('@filepath' => $file->uri)), 'error');
     return FALSE;
   }
 

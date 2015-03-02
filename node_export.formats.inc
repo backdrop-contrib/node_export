@@ -15,7 +15,7 @@ function node_export_node_export_format_handlers() {
     'json' => array(
       '#title' => t('JSON'),
       '#module' => 'node_export',
-      '#file' => drupal_get_path('module', 'node_export') . '/formats/json.inc',
+      '#file' => backdrop_get_path('module', 'node_export') . '/formats/json.inc',
       '#description' => t(
         '<a href="!json">JavaScript Object Notation</a> code.',
         array(
@@ -27,24 +27,24 @@ function node_export_node_export_format_handlers() {
       '#import_callback' => 'node_export_json_import',
     ),
 
-    'drupal' => array(
-      '#title' => t('Drupal var export'),
+    'backdrop' => array(
+      '#title' => t('backdrop var export'),
       '#module' => 'node_export',
-      '#file' => drupal_get_path('module', 'node_export') . '/formats/drupal.inc',
+      '#file' => backdrop_get_path('module', 'node_export') . '/formats/backdrop.inc',
       '#description' => t(
-        '<a href="!drupal">Drupal var export</a> code.',
+        '<a href="!backdrop">backdrop var export</a> code.',
         array(
-          '!drupal' => 'http://api.drupal.org/api/drupal/includes!utility.inc/function/drupal_var_export/7'
+          '!backdrop' => 'http://api.backdrop.org/api/backdrop/includes!utility.inc/function/backdrop_var_export/7'
         )
       ),
-      '#export_callback' => 'node_export_drupal_export',
-      '#import_callback' => 'node_export_drupal_import',
+      '#export_callback' => 'node_export_backdrop_export',
+      '#import_callback' => 'node_export_backdrop_import',
     ),
 
     'serialize' => array(
       '#title' => t('Serialize'),
       '#module' => 'node_export',
-      '#file' => drupal_get_path('module', 'node_export') . '/formats/serialize.inc',
+      '#file' => backdrop_get_path('module', 'node_export') . '/formats/serialize.inc',
       '#description' => t(
         'Very robust, though not human readable, representation through <a href="!wiki">Serialization</a> using the PHP <a href="!php">serialize</a> function.',
         array(
@@ -59,7 +59,7 @@ function node_export_node_export_format_handlers() {
     'xml' => array(
       '#title' => t('XML'),
       '#module' => 'node_export',
-      '#file' => drupal_get_path('module', 'node_export') . '/formats/xml.inc',
+      '#file' => backdrop_get_path('module', 'node_export') . '/formats/xml.inc',
       '#description' => t(
         '<a href="!xml">XML 1.0</a> representation which is good for machine-readability and human-readability.',
         array(
@@ -74,7 +74,7 @@ function node_export_node_export_format_handlers() {
     'dsv' => array(
       '#title' => t('DSV'),
       '#module' => 'node_export',
-      '#file' => drupal_get_path('module', 'node_export') . '/formats/dsv.inc',
+      '#file' => backdrop_get_path('module', 'node_export') . '/formats/dsv.inc',
       '#description' => t(
         'Configurable <a href="!dsv">Delimiter-separated values</a> code. Export and import sites must be configured the same.',
         array(
