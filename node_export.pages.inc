@@ -301,8 +301,8 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
       return;
     }
     //$nodestring = print_r($nodes);
-    backdrop_set_message("yo yo yo from node_export.pages.inc");
-    backdrop_set_message("nodes is: " . " something I'm sure");
+//    backdrop_set_message("yo yo yo from node_export.pages.inc");
+//    backdrop_set_message("nodes is: " . " something I'm sure");
 
     $nids = node_export_nodes_to_nids($nodes);
     $format = $result['format'];
@@ -321,10 +321,10 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
       // Single node, output straight away.
       drupal_set_title(t('Node export of !title', array('!title' => $nodes->title)));
 
-      drupal_set_message("node_export_pages.inc: nids, code_string, format");
-      drupal_set_message("nids: $nids");
-      drupal_set_message("code_string: $code_string");
-      drupal_set_message("format: $format");
+  //    drupal_set_message("node_export_pages.inc: nids, code_string, format");
+  //    drupal_set_message("nids: $nids");
+  //    drupal_set_message("code_string: $code_string");
+  //    drupal_set_message("format: $format");
 
 
       return backdrop_get_form('node_export_form', $nids, $code_string, $format);
@@ -354,15 +354,9 @@ function node_export_gui($nodes = NULL, $format = NULL, $delivery = NULL) {
  */
 function node_export_nodes_to_nids($nodes) {
   if (is_object($nodes)) {
-    drupal_set_message("node_export_nodes_to_nids: it's an object");
     $nids = array($nodes->nid);
-    $nids_string = print_r($nids);
-    drupal_set_message("nids is: " . $nids_string);
-
   }
   else {
-    drupal_set_message("node_export_nodes_to_nids: NOT an object");
-
     $nids = array();
     foreach ($nodes as $node) {
       if (is_object($node)) {
